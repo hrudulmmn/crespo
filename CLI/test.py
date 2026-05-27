@@ -1,6 +1,6 @@
 import config
 from pathlib import Path
-from tree_sitter import QueryCursor
+from tree_sitter import QueryCursor,Parser
 
 def get_parent(node):
     CLASS_NODE_TYPES = {
@@ -40,18 +40,20 @@ def extract(file):
     if not lang_config:
         return {"fallback": True}
 
-    parser = lang_config["parser"]
+    
     lang_obj = lang_config["lang_obj"]
+    parser = Parser(lang_obj)
     query = lang_obj.query(lang_config["query"])
 
     with open(file, encoding="utf8", errors="ignore") as f:
         source = f.read()
 
+    source_byte = source.encode("utf8",errors="ignore")
     # 0.25.2 takes string directly
-    tree = parser.parse(source)
+    tree = parser.parse(source_byte)
     cursor = QueryCursor(query=query)
     # returns dict in 0.25.2
-    captures = cursor.captures(tree.root_node())
+    captures = cursor.captures(tree.root_node)
 
     functions = []
     imports = []
@@ -89,8 +91,8 @@ def extract(file):
 
     # imports
     for capture_name in [
-        "import", "import_from",
-        "import_symbol", "import_source"
+        "imp", "imp_from",
+        "imp_symbol", "imp_source"
     ]:
         for node in captures.get(capture_name, []):
             text = node.text

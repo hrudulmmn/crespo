@@ -1,6 +1,7 @@
 import tree_sitter_language_pack as lang_pack
 import config
 from pathlib import Path
+from tree_sitter import QueryCursor,Parser
 
 
 def get_parent(node):
@@ -33,17 +34,6 @@ def get_parent(node):
         
     return None
 
-def get_docstring(node):
-    func_node = node.parent  
-    body = func_node.child_by_field_name("body")
-    if not body or not body.children:
-        return None
-    first = body.children[0]
-    if first.type == "expression_statement" and first.children:
-        inner = first.children[0]
-        if inner.type == "string":
-            return inner.text.decode("utf8", errors="ignore").strip('"\' \n')
-    return None
 
 def extract(file):
     ext = Path(file).suffix.lower()
@@ -53,20 +43,19 @@ def extract(file):
     if not lang_config:
         return {"Fallback":True}
     
-    parser = lang_config["parser"]
+    
     lang_obj  =lang_config["lang_obj"]
-    try:
-        query = lang_obj.query(lang_config["query"])
-    except Exception as e:
-        print(f"Query failed for ext: {ext}")
-        print(f"Query string:\n{lang_config['query']}")
-        raise
+    parser = Parser(lang_obj)
+    query = lang_obj.query(lang_config["query"])
+    
 
     with open(file,encoding="utf8",errors="ignore") as f:
         source = f.read()
     
-    tree = parser.parse(source)
-    captures = query.query(tree.root_node)
+    source_bytes = source.encode(encoding="utf8",errors="ignore")
+    tree = parser.parse(source_bytes)
+    cursor = QueryCursor(query)
+    captures = cursor.captures(tree.root_node)
 
     functions=[]
     imports=[]
@@ -74,45 +63,51 @@ def extract(file):
     struct=[]
     enum=[]
 
-    last_func = None
-    last_node = None
+    func_nodes = sorted(
+        captures.get("func_name",[]),key=lambda n:n.start_byte
+    )
 
-    for node,capture in captures:
-        text = node.text.decode("utf8",errors="ignore")
+    param_nodes = sorted(
+        captures.get("func_params",[]),key=lambda n:n.start_byte
+    )
 
-        if capture=="func_name":
-            last_func=text
-            last_node=node
+    for i,node_name in enumerate(func_nodes):
+        name = node_name.text
 
-        elif capture=="func_params":
-            if last_func:
-                parent = get_parent(last_node)
-                docstring = get_docstring(last_node)
-                fn = {"name":last_func,"params":text,"docstring":docstring}
+        params = ""
+        if i < len(param_nodes):
+            params = param_nodes[i].text
 
-                if parent:
-                    if parent not in classes:
-                        classes[parent]=[]
-                    classes[parent].append(fn)
-                else:
-                    functions.append(fn)  
-
-                last_func=None
-                last_node=None
         
-        elif capture in ["imp","imp_from","imp_symbol","imp_source"]:
-            if text not in imports:
-                imports.append(text)
+        parent = get_parent(node_name)
+        fn = {"name":name,"params":params}
+
+        if parent:
+            if parent not in classes:
+                classes[parent]=[]
+            classes[parent].append(fn)
+        else:
+            functions.append(fn)  
+
+        for capture in ["imp","imp_from","imp_symbol","imp_source"]:
+            for  node in captures.get(capture,[]):
+                text=node.text
+                if text not in imports:
+                    imports.append(text)
         
-        elif capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
-            if text not in classes:
-                classes[text]=[]
+        for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
+            for node in captures.get(capture,[]):
+                text = node.text
+                if text not in classes:
+                    classes[text]=[]
         
-        elif capture=="struct_name":
+        for node in captures.get("struct_name",[]):
+            text = node.text
             if text not in struct:
                 struct.append(text)
             
-        elif capture=="enum_name":
+        for node in captures.get("enum_name",[]):
+            text=node.text
             if text not in enum:
                 enum.append(text)
         
