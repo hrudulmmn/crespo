@@ -1,6 +1,8 @@
 import argparse
 import os
 import walker
+import parse
+from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(
@@ -16,6 +18,12 @@ def main():
         return
     
     valid_files = walker.walk_dir(path=args.path)
+    print(valid_files)
+    extracted=[]
+    for file in valid_files:
+        signature = parse.extract(Path(file["abspath"]).resolve())
+        extracted.append(signature)
+    print(extracted)
     
 
 if __name__=="__main__":
