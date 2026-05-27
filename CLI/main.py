@@ -20,7 +20,7 @@ def main():
     valid_files = walker.walk_dir(path=args.path)
     extracted=[]
     for file in valid_files:
-        signature = parse.extract(Path(file["abspath"]).resolve())
+        signature = parse.extract(Path(file["abspath"]).resolve(),file["relpath"])
         extracted.append(signature)
     print(extracted)
     

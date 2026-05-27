@@ -35,7 +35,7 @@ def get_parent(node):
     return None
 
 
-def extract(file):
+def extract(file,rel_path=None):
     ext = Path(file).suffix.lower()
     configs = config.get_config()
     lang_config = configs.get(ext)
@@ -72,11 +72,11 @@ def extract(file):
     )
 
     for i,node_name in enumerate(func_nodes):
-        name = node_name.text
+        name = node_name.text.decode("utf8",errors="ignore")
 
         params = ""
         if i < len(param_nodes):
-            params = param_nodes[i].text
+            params = param_nodes[i].text.decode("utf8",errors="ignore")
 
         
         parent = get_parent(node_name)
@@ -89,29 +89,29 @@ def extract(file):
         else:
             functions.append(fn)  
 
-        for capture in ["imp","imp_from","imp_symbol","imp_source"]:
-            for  node in captures.get(capture,[]):
-                text=node.text
-                if text not in imports:
-                    imports.append(text)
+    for capture in ["imp","imp_from","imp_symbol","imp_source"]:
+        for  node in captures.get(capture,[]):
+            text=node.text.decode("utf8",errors="ignore")
+            if text not in imports:
+                imports.append(text)
+    
+    for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
+        for node in captures.get(capture,[]):
+            text = node.text.decode("utf8",errors="ignore")
+            if text not in classes:
+                classes[text]=[]
+    
+    for node in captures.get("struct_name",[]):
+        text = node.text.decode("utf8",errors="ignore")
+        if text not in struct:
+            struct.append(text)
         
-        for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
-            for node in captures.get(capture,[]):
-                text = node.text
-                if text not in classes:
-                    classes[text]=[]
+    for node in captures.get("enum_name",[]):
+        text=node.text.decode("utf8",errors="ignore")
+        if text not in enum:
+            enum.append(text)
         
-        for node in captures.get("struct_name",[]):
-            text = node.text
-            if text not in struct:
-                struct.append(text)
-            
-        for node in captures.get("enum_name",[]):
-            text=node.text
-            if text not in enum:
-                enum.append(text)
-        
-    return {"function":functions,"classes":classes,"imports":imports,"struct":struct,"enum":enum}
+    return {"file_name":rel_path or str(file),"functions":functions,"classes":classes,"imports":imports,"struct":struct,"enum":enum}
     
     
 
