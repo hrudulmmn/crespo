@@ -2,6 +2,7 @@ import argparse
 import os
 import walker
 import parse
+import generate
 from pathlib import Path
 
 def main():
@@ -12,7 +13,9 @@ def main():
     parser.add_argument("path",type=str,help="the root directory path of your codebase")
 
     args = parser.parse_args()
-
+    path = args.path
+    reponame = Path(path).resolve().name
+    print(reponame)
     if not os.path.exists(args.path):
         print(f"Error: Specified Path({args.path}) Does not Exist!")
         return
@@ -23,6 +26,9 @@ def main():
         signature = parse.extract(Path(file["abspath"]).resolve(),file["relpath"])
         extracted.append(signature)
     print(extracted)
+
+    generate.gen_struct(extracted,reponame)
+
     
 
 if __name__=="__main__":

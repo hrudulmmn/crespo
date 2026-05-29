@@ -89,7 +89,7 @@ def extract(file,rel_path=None):
         else:
             functions.append(fn)  
 
-    for capture in ["imp","imp_from","imp_symbol","imp_source"]:
+    for capture in ["imp","imp_from","imp_source"]:
         for  node in captures.get(capture,[]):
             text=node.text.decode("utf8",errors="ignore")
             if text not in imports:
@@ -111,7 +111,7 @@ def extract(file,rel_path=None):
         if text not in enum:
             enum.append(text)
         
-    return {"file_name":rel_path or str(file),"functions":functions,"classes":classes,"imports":imports,"struct":struct,"enum":enum}
+    return {"file_name":rel_path or str(file),"ext":ext,"functions":functions,"classes":classes,"imports":imports,"struct":struct,"enum":enum}
     
     
 

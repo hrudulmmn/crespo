@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="Files">
+  <meta>
+    <dep>cv2,mediapipe,numpy,PyQt6,fitz,groq,markdown</dep>
+  </meta>
+  <files>
+    <f p="gesture.py" e=".py">
+      <imp>cv2,time,math,mediapipe,numpy,PyQt6.QtCore</imp>
+      <cls n="Smoother">
+        <fn n="__init__" p="(self,alpha=0.55)" />
+        <fn n="smooth" p="(self,landmarks)" />
+        <fn n="reset" p="(self)" />
+      </cls>
+      <cls n="GestureChecker">
+        <fn n="__init__" p="(self,min=75)" />
+        <fn n="trigger" p="(self,gesturename,detected,time)" />
+      </cls>
+      <cls n="Gesture">
+        <fn n="__init__" p="(self, parent =None)" />
+        <fn n="run" p="(self)" />
+        <fn n="fingUp" p="(smoothedNorm,tip,pip)" />
+      </cls>
+      <cls n="GestureMan">
+        <fn n="__init__" p="(self, parent = None)" />
+        <fn n="start" p="(self)" />
+        <fn n="stop" p="(self)" />
+      </cls>
+    </f>
+    <f p="main.py" e=".py">
+      <imp>sys,PyQt6.QtWidgets,Ui</imp>
+    </f>
+    <f p="render.py" e=".py">
+      <imp>fitz,base64,PyQt6.QtWidgets,PyQt6.QtGui</imp>
+      <fn n="render" p="(doc,pgno,zoom)" />
+      <fn n="exportImg" p="(doc,pgno)" />
+    </f>
+    <f p="summarise.py" e=".py">
+      <imp>os,render,groq</imp>
+      <fn n="pagesummarise" p="(doc,page,conts)" />
+      <fn n="imgText" p="(doc,page)" />
+    </f>
+    <f p="test.py" e=".py">
+      <imp>base64,fitz,groq</imp>
+    </f>
+    <f p="test2.py" e=".py" />
+    <f p="Ui.py" e=".py">
+      <imp>webbrowser,sys,ctypes,markdown,fitz,render,summarise,os,PyQt6.QtWidgets,PyQt6.QtCore,gesture,PyQt6,PyQt6.QtGui</imp>
+      <cls n="Window">
+        <fn n="__init__" p="(self)" />
+        <fn n="opnpdf" p="(self)" />
+        <fn n="tonxt" p="(self)" />
+        <fn n="toprev" p="(self)" />
+        <fn n="enlarge" p="(self)" />
+        <fn n="minimise" p="(self)" />
+        <fn n="pageScroll" p="(self,value)" />
+        <fn n="summary" p="(self)" />
+        <fn n="close" p="(self)" />
+        <fn n="resource_path" p="(self, relative_path)" />
+        <fn n="toggle2" p="(self)" />
+        <fn n="toggle" p="(self)" />
+        <fn n="resizeEvent" p="(self,event)" />
+        <fn n="checkstate" p="(self)" />
+        <fn n="startGest" p="(self,state)" />
+        <fn n="gestSum" p="(self,enbled:bool)" />
+        <fn n="gestZoom" p="(self,state:int)" />
+        <fn n="eventFilter" p="(self,obj,event)" />
+        <fn n="opnlink" p="(self)" />
+      </cls>
+    </f>
+  </files>
+</repo>
