@@ -2,6 +2,7 @@ import tree_sitter_language_pack as lang_pack
 import config
 from pathlib import Path
 from tree_sitter import QueryCursor,Parser
+import security
 
 
 def get_parent(node):
@@ -34,8 +35,21 @@ def get_parent(node):
         
     return None
 
+def extract_body(func_node,source_bytes,ext)->str:
+    if not func_node:
+        return ""
+    body_node = func_node.child_by_field_name("body")
+    if not body_node:
+        return source_bytes[func_node.start_byte:func_node.end_byte].decode("utf8",errors="ignore")
+    
+    body = source_bytes[body_node.start_byte:func_node.end_byte].decode("utf8",errors="ignore").strip()
+    body = strip_body(body,ext)
+    body = truncate_body(body)
+    return body
 
-def extract(file,rel_path=None):
+
+
+def extract_struct(file,mode:str,rel_path=None):
     ext = Path(file).suffix.lower()
     configs = config.get_config()
     lang_config = configs.get(ext)
@@ -80,7 +94,12 @@ def extract(file,rel_path=None):
 
         
         parent = get_parent(node_name)
-        fn = {"name":name,"params":params}
+        body = extract_body(node_name.parent,source_bytes=source_bytes,ext=ext)
+        if mode =="summarize":
+            body = security.redact(body)
+            fn = {"name":name,"params":params,"body":body}
+        else:
+            fn = {"name":name,"params":params}
 
         if parent:
             if parent not in classes:
@@ -115,5 +134,116 @@ def extract(file,rel_path=None):
     
     
 
+def strip_body(body: str, extension: str) -> str:
+    COMMENT_CONFIG = {
+    ".py": {
+        "single": ["#"],
+        "block": []
+    },
+    ".js": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".jsx": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".ts": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".tsx": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".java": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".go": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".rs": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".c": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".h": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".cpp": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+    ".hpp": {
+        "single": ["//"],
+        "block": [("/*", "*/")]
+    },
+}
+    config = COMMENT_CONFIG.get(
+        extension,
+        {"single": ["#", "//"], "block": [("/*", "*/")]}
+    )
 
+    lines = body.splitlines()
+    cleaned = []
+
+    in_block = False
+    block_end = None
+
+    for line in lines:
+        stripped = line.strip()
+
+        if not stripped:
+            continue
+
+        # Currently inside block comment
+        if in_block:
+            if block_end in stripped:
+                in_block = False
+            continue
+
+        # Single-line comments
+        if any(stripped.startswith(marker) for marker in config["single"]):
+            continue
+
+        # Block comments
+        started_block = False
+        for start, end in config["block"]:
+            if stripped.startswith(start):
+                started_block = True
+
+                # Multi-line block comment
+                if end not in stripped[len(start):]:
+                    in_block = True
+                    block_end = end
+
+                break
+
+        if started_block:
+            continue
+
+        cleaned.append(line)
+
+    return "\n".join(cleaned)
+
+def truncate_body(body: str) -> str:
+    lines = body.split("\n")
+    
+    if len(lines) <= 35:
+        return body
+    
+    head = lines[:20]  # core logic
+    tail = lines[-10:]  # return value
+    
+    return (
+        "\n".join(head) +
+        "\n# ...\n" +
+        "\n".join(tail)
+    )
 

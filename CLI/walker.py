@@ -3,8 +3,23 @@ from pathlib import Path
 import config
 
 def walk_dir(path:str):
-    IGNORE_FOLDERS = {'.git', 'node_modules', '__pycache__', '.next', 'venv', '.venv'}
-    IGNORE_FILES = {'package-lock.json', 'yarn.lock', '.DS_Store','.gitignore'}
+    IGNORE_FOLDERS = {".git",
+    ".github",
+    ".venv",
+    "venv",
+    "node_modules",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".tox",
+    ".next",
+    "dist",
+    "build",
+    "target",      # Rust
+    "site-packages",
+    ".idea",
+    ".vscode",}
+    IGNORE_FILES = {'package-lock.json', 'yarn.lock', '.DS_Store','.gitignore','.env'}
     CONFIG_FILES = {
     "package.json", "requirements.txt",
     "Cargo.toml", "go.mod", "Dockerfile"
@@ -18,7 +33,7 @@ def walk_dir(path:str):
 
     base_path = Path(path).resolve()
     for root,dirs,files in os.walk(path):
-        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS ]
+        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS and not d.startswith(".") ]
 
         for file in files:
             isconfig = False
@@ -26,6 +41,8 @@ def walk_dir(path:str):
                 continue
             if file in CONFIG_FILES:
                 isconfig=True
+            if file.startswith(".env"):
+                continue
             if not isconfig and (Path(file)).suffix.lower() not in config.get_config():
                 continue
 

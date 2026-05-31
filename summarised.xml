@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="Files" s="Hand gesture recognition using OpenCV, MediaPipe, and PyQt6 for real-time processing.">
+  <meta>
+    <dep>cv2,mediapipe,numpy,PyQt6,fitz,groq,markdown</dep>
+  </meta>
+  <files>
+    <f p="gesture.py" e=".py" s="DESCRIPTION: Handles gesture recognition using MediaPipe and OpenCV, with smoothing and triggering logic.">
+      <imp>cv2,time,math,mediapipe,numpy,PyQt6.QtCore</imp>
+      <cls n="Smoother" s="Exponential smoothing filter for landmark data.">
+        <fn n="__init__" p="(self,alpha=0.55)" />
+        <fn n="smooth" p="(self,landmarks)" />
+        <fn n="reset" p="(self)" />
+      </cls>
+      <cls n="GestureChecker" s="GestureChecker manages hand gesture detection and smoothing.">
+        <fn n="__init__" p="(self,min=75)" />
+        <fn n="trigger" p="(self,gesturename,detected,time)" />
+      </cls>
+      <cls n="Gesture" s="Gesture class manages hand movement detection and smoothing.">
+        <fn n="__init__" p="(self, parent =None)" />
+        <fn n="run" p="(self)" />
+        <fn n="fingUp" p="(smoothedNorm,tip,pip)" />
+      </cls>
+      <cls n="GestureMan" s="Gesture recognition and smoothing manager.">
+        <fn n="__init__" p="(self, parent = None)" />
+        <fn n="start" p="(self)" />
+        <fn n="stop" p="(self)" />
+      </cls>
+    </f>
+    <f p="main.py" e=".py" s="Main entry point for PyQt6-based graphical user interface application.">
+      <imp>sys,PyQt6.QtWidgets,Ui</imp>
+    </f>
+    <f p="render.py" e=".py" s="Renders PDF pages to images using fitz and PyQt6.">
+      <imp>fitz,base64,PyQt6.QtWidgets,PyQt6.QtGui</imp>
+      <fn n="render" p="(doc,pgno,zoom)" />
+      <fn n="exportImg" p="(doc,pgno)" />
+    </f>
+    <f p="summarise.py" e=".py" s="Summarises PDF pages using AI chat completions.">
+      <imp>os,render,groq</imp>
+      <fn n="pagesummarise" p="(doc,page,conts)" />
+      <fn n="imgText" p="(doc,page)" />
+    </f>
+    <f p="test.py" e=".py" s="Unit tests for PDF processing using fitz and groq libraries.">
+      <imp>base64,fitz,groq</imp>
+    </f>
+    <f p="test2.py" e=".py" s="Empty Python file with no functional responsibilities." />
+    <f p="Ui.py" e=".py" s="DESCRIPTION: Ui.py handles PDF viewing and manipulation with gesture control. It utilizes PyQt6 for the graphical interface and integrates with other modules for rendering and summarization.">
+      <imp>webbrowser,markdown,sys,ctypes,fitz,render,summarise,os,PyQt6,PyQt6.QtWidgets,PyQt6.QtGui,PyQt6.QtCore,gesture</imp>
+      <cls n="Window" s="DESCRIPTION: Manages window operations and gestures.">
+        <fn n="__init__" p="(self)" />
+        <fn n="opnpdf" p="(self)" />
+        <fn n="tonxt" p="(self)" />
+        <fn n="toprev" p="(self)" />
+        <fn n="enlarge" p="(self)" />
+        <fn n="minimise" p="(self)" />
+        <fn n="pageScroll" p="(self,value)" />
+        <fn n="summary" p="(self)" />
+        <fn n="close" p="(self)" />
+        <fn n="resource_path" p="(self, relative_path)" />
+        <fn n="toggle2" p="(self)" />
+        <fn n="toggle" p="(self)" />
+        <fn n="resizeEvent" p="(self,event)" />
+        <fn n="checkstate" p="(self)" />
+        <fn n="startGest" p="(self,state)" />
+        <fn n="gestSum" p="(self,enbled:bool)" />
+        <fn n="gestZoom" p="(self,state:int)" />
+        <fn n="eventFilter" p="(self,obj,event)" />
+        <fn n="opnlink" p="(self)" />
+      </cls>
+    </f>
+  </files>
+</repo>
