@@ -6,14 +6,14 @@ import os
 class Summariser():
     PROMPTS = {
     
-        "repo": """Describe this codebase in ONE sentence max 20 words.
+        "repo": """Describe this codebase in ONE sentence max 30 words.
         Include what it does, primary stack, core features.
         Repo: {repo_name}
         Dependencies: {deps}
         Files: {files}
         Return only the summary.""",
 
-        "file": """Describe this file's responsibility in ONE sentence max 15 words.
+        "file": """Describe this file's responsibility in ONE sentence max 20 words.
         File: {path}
         Language: {lang}
         Imports: {imports}
@@ -21,14 +21,14 @@ class Summariser():
         Functions: {functions}
         Return only the summary.""",
 
-        "class": """Describe what this class represents and manages in ONE sentence max 15 words.
+        "class": """Describe what this class represents and manages in ONE sentence max 30 words and one sentence summary of class methods.
         Class: {name}
         Language: {lang}
         Methods:
         {method_signatures}
         Return only the summary.""",
 
-        "function": """Describe this {lang} function in ONE sentence max 20 words.
+        "function": """Describe this {lang} function in ONE sentence max 30 words.
         Start with action verb. Include inputs, outputs, side effects.
         Signature: {signature}
         Body:
@@ -37,7 +37,7 @@ class Summariser():
 
         }
     def __init__(self):
-        self.client = Groq(api_key=os.getenv('CRESPO_GROQ_KEY'))
+        self.client = Groq(api_key=os.getenv('GroqApi'))
         self.systemprompt = """You are an expert senior software engineer and technical writer specializing in code analysis and distillation.
 
                     Your task is to analyze a single file from a codebase and create a highly concise, information-dense summary optimized for LLM consumption.
@@ -51,7 +51,7 @@ class Summariser():
                     - Keep summaries short but information-rich
 
                     Output Format (strictly follow this):
-                    DESCRIPTION: [2 sentences maximum. Explain key responsibilities, important classes/functions, architecture decisions, and relationships with other parts of the project.]
+                    [2 sentences maximum. Explain key responsibilities, important classes/functions, architecture decisions, and relationships with other parts of the project.]
 
                     Style Guidelines:
                     - Use professional but natural language
@@ -69,7 +69,7 @@ class Summariser():
     def summarise_repo(self,repo_name,deps,files):
         userPrompt = self.get_prompt("repo",repo_name=repo_name,files = files,deps=deps)
         response = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[{
                 "role":"system",
                 "content":self.systemprompt
@@ -77,14 +77,14 @@ class Summariser():
             {
                 "role":"user",
                 "content":userPrompt
-            }],temperature=0.1,max_tokens=300
+            }],temperature=0.1,max_tokens=50
         )
         return response.choices[0].message.content.strip()
     
     def summarise_file(self,path,lang,imports,classes,functions):
         userPrompt = self.get_prompt("file",path=path,lang=lang,imports=imports,classes=classes,functions=functions)
         response = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[{
                 "role":"system",
                 "content":self.systemprompt
@@ -92,14 +92,14 @@ class Summariser():
             {
                 "role":"user",
                 "content":userPrompt
-            }],temperature=0.1,max_tokens=300
+            }],temperature=0.1,max_tokens=50
         )
         return response.choices[0].message.content.strip()
     
     def summarise_class(self,name,lang,method_signature):
         userPrompt = self.get_prompt("class",name=name,lang=lang,method_signatures=method_signature)
         response = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[{
                 "role":"system",
                 "content":self.systemprompt
@@ -107,14 +107,14 @@ class Summariser():
             {
                 "role":"user",
                 "content":userPrompt
-            }],temperature=0.1,max_tokens=300
+            }],temperature=0.1,max_tokens=50
         )
         return response.choices[0].message.content.strip()
     
     def summarise_fun(self,lang,signature,body):
         userPrompt = self.get_prompt("function",lang=lang,signature=signature,body=body)
         response = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[{
                 "role":"system",
                 "content":self.systemprompt
@@ -122,6 +122,7 @@ class Summariser():
             {
                 "role":"user",
                 "content":userPrompt
-            }],temperature=0.1,max_tokens=300
+            }],temperature=0.1,max_tokens=50
         )
         return response.choices[0].message.content.strip()
+    

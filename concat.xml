@@ -1,0 +1,679 @@
+<?xml version='1.0' encoding='utf8'?>
+<repo n="Files">
+	<file n="gesture.py">
+		<src>
+		import cv2
+		import mediapipe as mp
+		import math 
+		import numpy as np
+		from PyQt6.QtCore import pyqtSignal,QObject,QThread
+		import time
+		
+		class Smoother:
+		    def __init__(self,alpha=0.55):
+		        self.alpha=alpha
+		        self.smoothedland=None
+		    
+		    def smooth(self,landmarks):
+		        current=np.array(landmarks)
+		
+		        if self.smoothedland is None:
+		            self.smoothedland=current
+		            return current
+		        
+		        self.smoothedland=(self.alpha*current + (1-self.alpha)*self.smoothedland)
+		        return self.smoothedland
+		    
+		    def reset(self):
+		        self.smoothedland=None
+		
+		class GestureChecker:
+		    def __init__(self,min=75):
+		        self.minhold=min
+		        self.isactive={}
+		        self.activetime={}
+		
+		    def trigger(self,gesturename,detected,time):
+		        if gesturename not in self.activetime:
+		            self.isactive[gesturename]=False
+		            self.activetime[gesturename]=None
+		        if detected:
+		            if self.activetime[gesturename] is None:
+		                self.activetime[gesturename]=time
+		                return False
+		            holdtime = time-self.activetime[gesturename]
+		
+		            if holdtime&gt;=self.minhold and not self.isactive[gesturename]:
+		                self.isactive[gesturename]=True
+		                return True
+		            return False
+		        else:
+		            self.isactive[gesturename]=False
+		            self.activetime[gesturename]=None
+		            return False
+		
+		class Gesture(QObject):
+		    nextPage = pyqtSignal()
+		    prevPage = pyqtSignal()
+		    takt = pyqtSignal(bool)
+		    zoom = pyqtSignal(int)
+		    def __init__(self, parent =None):
+		        super().__init__(parent)
+		        self.hands = mp.solutions.hands
+		        self.draw = mp.solutions.drawing_utils
+		        self.running =True
+		        self.enabled = False
+		        self.active = False
+		
+		        self.nextTime = 0.0
+		        self.prevTime = 0.0
+		        self.taktTime = 0.0
+		        self.cooldown = 350
+		        self.taktcooldown = 600
+		        self.lastpinch=0
+		
+		        self.smoother = Smoother(alpha=0.55)
+		        self.checker = GestureChecker(min=75)
+		
+		    def run(self):
+		        capture = cv2.VideoCapture(0)
+		        hand = self.hands.Hands(
+		                    static_image_mode = False,
+		                    max_num_hands = 1,
+		                    min_detection_confidence = 0.7,
+		                    min_tracking_confidence = 0.7
+		                )
+		        
+		        try:
+		            while self.running:
+		                ret,frame = capture.read()
+		                if not ret:
+		                    self.active = False
+		                    break
+		
+		                self.time = time.time()*1000
+		                rgb = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+		
+		                result = hand.process(rgb)
+		                if result.multi_hand_landmarks:
+		                    for landmarks in result.multi_hand_landmarks:
+		                        self.draw.draw_landmarks(
+		                            frame,
+		                            landmarks,
+		                            self.hands.HAND_CONNECTIONS
+		                        )
+		                        
+		                        norm = []
+		                        wristx = landmarks.landmark[0].x
+		                        wristy = landmarks.landmark[0].y
+		                        for point in landmarks.landmark:
+		                            
+		                            x = point.x - wristx
+		                            y = point.y - wristy
+		                            norm.append((x,y))
+		                        smoothedNorm = self.smoother.smooth(norm)
+		
+		                        def fingUp(smoothedNorm,tip,pip):
+		                            return smoothedNorm[tip][1]&lt;smoothedNorm[pip][1]
+		                        
+		                        thumb = fingUp(smoothedNorm,4,2)
+		                        index = fingUp(smoothedNorm,8,6)
+		                        middle = fingUp(smoothedNorm,12,10)
+		                        ring = fingUp(smoothedNorm,16,14)
+		                        smol = fingUp(smoothedNorm,20,18)
+		
+		                        takt = middle and index and thumb and not ring and not smol and smoothedNorm[8][1]&lt;-0.15
+		
+		                        if(self.checker.trigger("takt",takt,self.time)):
+		                            if(self.time-self.taktTime&gt;=self.taktcooldown and not self.enabled):
+		                                self.takt.emit(True)
+		                                self.taktTime = self.time
+		                                self.enabled = True
+		                            elif(self.time-self.taktTime&gt;=self.taktcooldown and self.enabled):
+		                                self.takt.emit(False)
+		                                self.taktTime = self.time
+		                                self.enabled = False
+		                    
+		                        move=None
+		                        direction = middle and index and thumb and ring and smol
+		                        if(direction):
+		                            dx=smoothedNorm[12][0]
+		                            if dx&lt;-0.22:
+		                                move="prev"
+		                            elif dx&gt;0.22:
+		                                move="next"
+		
+		                        if (move):
+		                            if(self.checker.trigger(move,True,self.time)):
+		                                if(move=="prev" and self.time-self.prevTime&gt;=self.cooldown):
+		                                    self.prevPage.emit()
+		                                    self.prevTime = self.time
+		                        
+		                                if(move=="next" and self.time-self.nextTime&gt;=self.cooldown):
+		                                    self.nextPage.emit()
+		                                    self.nextTime = self.time
+		                        else:
+		                            self.checker.trigger("prev",False,self.time)
+		                            self.checker.trigger("next",False,self.time)
+		
+		                            #zoom
+		                        if(index and thumb and not middle and not ring and not smol):
+		                                a = smoothedNorm[4]
+		                                b = smoothedNorm[8]
+		                                
+		                                dist = math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+		                                threshold = 0.01
+		
+		                                pinch = dist
+		                                if(pinch-self.lastpinch&gt;threshold):
+		                                    self.zoom.emit(+1)
+		                                if(pinch-self.lastpinch&lt;-threshold):
+		                                    self.zoom.emit(-1)
+		                                self.lastpinch = pinch
+		                else:
+		                    self.smoother.reset()
+		
+		                cv2.imshow("Camera",frame)
+		                if cv2.waitKey(1) &amp; 0xFF==ord('q'):
+		                    self.active==False
+		                    break
+		                
+		
+		        finally:
+		            capture.release()
+		            cv2.destroyAllWindows()
+		            hand.close()
+		
+		class GestureMan(QObject):
+		    def __init__(self, parent = None):
+		        super().__init__(parent)
+		        self.thred = QThread()
+		        self.man = Gesture()
+		        self.man.moveToThread(self.thred)
+		        self.thred.started.connect(self.man.run)
+		        
+		    def start(self):
+		        self.thred.start()
+		        self.man.running = True
+		        self.man.active = True
+		    
+		
+		    def stop(self):
+		        self.man.running=False
+		        self.man.active = False
+		        self.thred.quit()
+		        self.thred.wait()
+		
+		
+		
+	</src>
+	</file>
+	<file n="main.py">
+		<src>
+		import sys
+		from PyQt6.QtWidgets import QApplication
+		from Ui import Window
+		
+		app = QApplication(sys.argv)
+		with open("Design.qss","r") as style:
+		            app.setStyleSheet(style.read())
+		window = Window()
+		window.setWindowTitle("Kara")
+		window.resize(1000,750)
+		window.show()
+		window.checkstate()
+		
+		sys.exit(app.exec())
+	</src>
+	</file>
+	<file n="render.py">
+		<src>
+		import fitz
+		from PyQt6.QtWidgets import *
+		from PyQt6.QtGui import QImage,QPixmap
+		import base64
+		
+		def render(doc,pgno,zoom):
+		    if not doc or pgno&gt;=len(doc):
+		        return None
+		    page = doc.load_page(pgno)
+		    zmatrix = fitz.Matrix(zoom,zoom)
+		    pix = page.get_pixmap(matrix=zmatrix)
+		    if pix.alpha:
+		        qformat = QImage.Format.Format_RGBA8888
+		    else:
+		        qformat = QImage.Format.Format_RGB888
+		    img = QImage(pix.samples,pix.width,pix.height,pix.stride,qformat).copy()
+		    pixmp = QPixmap.fromImage(img)
+		    return pixmp
+		
+		def exportImg(doc,pgno):
+		    if not doc or pgno&gt;=len(doc):
+		        return None
+		    page = doc.load_page(pgno)
+		    zmatrix = fitz.Matrix(1.0,1.0)
+		    pix = page.get_pixmap(matrix=zmatrix)
+		    png = pix.tobytes('png')
+		
+		    return base64.b64encode(png).decode("utf-8")
+	</src>
+	</file>
+	<file n="summarise.py">
+		<src>
+		from groq import Groq
+		import os
+		import render
+		
+		key = os.environ.get("GroqApi")
+		client = Groq(api_key=key)
+		model = "meta-llama/llama-4-scout-17b-16e-instruct"
+		
+		def pagesummarise(doc,page,conts):
+		    imgcont = imgText(doc,page)
+		    prompt = ("Summarise the following PDF page.\n\n"
+		    "TEXT CONTENT:\n" + conts + "\n\n"
+		     + "\n\n"
+		    +"Image description:\n" + imgcont + "\n\n"+"Give a compact,detailed, easy to understand summary with definitions.")
+		
+		    resp = client.chat.completions.create(
+		    model = model,
+		    messages =[{'role':'user','content':prompt}]
+		    )
+		    response = resp.choices[0].message.content
+		    return response
+		
+		def imgText(doc,page):
+		    img = render.exportImg(doc,page)
+		    prompt = "provide detailed description of the given page"
+		    resp = client.chat.completions.create(
+		        model=model,
+		        messages=[{
+		            "role":"user",
+		            "content": [
+		                {"type": "text",
+		                 "text":prompt},{
+		                "type":"image_url",
+		                "image_url":{"url":f"data:image/png;base64,{img}"},
+		                 },
+		            ],
+		        }]
+		
+		    )
+		    response = resp.choices[0].message.content
+		    return response
+		
+	</src>
+	</file>
+	<file n="test.py">
+		<src>
+		import base64
+		from groq import Groq
+		import fitz
+		key = 'api'
+		client = Groq(api_key=key)
+		model = "meta-llama/llama-4-scout-17b-16e-instruct"
+		pgno =0
+		doc = fitz.open("mod2.pdf")
+		
+		page = doc.load_page(0)
+		zmatrix = fitz.Matrix(1.0,1.0)
+		pix = page.get_pixmap(matrix=zmatrix)
+		png = pix.tobytes('png')
+		
+		img = base64.b64encode(png).decode("utf-8")
+		prompt = "provide detailed description of the given page"
+		resp = client.chat.completions.create(
+		        model=model,
+		        messages=[{
+		            "role":"user",
+		            "content": [
+		                {"type": "text",
+		                 "text":prompt},{
+		                "type":"image_url",
+		                "image_url":{"url":f"data:image/png;base64,{img}"},
+		                 },
+		            ],
+		        }]
+		
+		    )
+		response = resp.choices[0].message.content
+		print(response)
+	</src>
+	</file>
+	<file n="test2.py">
+		<src>
+
+	</src>
+	</file>
+	<file n="Ui.py">
+		<src>
+		from PyQt6 import *
+		from PyQt6.QtWidgets import *
+		from PyQt6.QtCore import Qt,QTimer,QEvent
+		import webbrowser
+		from PyQt6.QtGui import QIcon
+		import ctypes
+		import markdown
+		import sys,os
+		import fitz
+		import render
+		import summarise
+		from gesture import GestureMan
+		
+		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Kara.App")
+		
+		class Window(QMainWindow):
+		    def __init__(self):
+		        super().__init__()
+		        self.doc = None
+		        main = QWidget()
+		        self.setCentralWidget(main)
+		        mainlayout = QVBoxLayout(main)
+		        self.page=0
+		        self.zoom=1.2
+		        self.control = GestureMan()
+		
+		        icpath = self.resource_path("assets\Kara.png")
+		        self.setWindowIcon(QIcon(icpath))
+		        
+		        #pdf render area
+		        self.mainpdf = QWidget()
+		        self.mainpdf.setObjectName("pdf")
+		        lay = QHBoxLayout(self.mainpdf)
+		        self.pdf = QLabel()
+		        self.pdf.setVisible(False)
+		        self.pdf.setScaledContents(True)
+		        self.pdf.setAlignment(Qt.AlignmentFlag.AlignCenter)
+		        self.pdf.installEventFilter(self)
+		        lay.setContentsMargins(50,20,50,20)
+		        lay.addWidget(self.pdf,alignment=Qt.AlignmentFlag.AlignCenter)
+		
+		        #scroll area for pdf renderig
+		        self.scrll = QScrollArea()
+		        self.scrll.setWidgetResizable(True)
+		        self.scrll.setWidget(self.mainpdf)
+		        
+		        #summary panel
+		        split = QSplitter(Qt.Orientation.Horizontal)
+		
+		        self.togbtn = QPushButton('')
+		        self.togbtn.setIcon(QIcon("assets/sum.svg"))
+		        self.togbtn.setObjectName("Sumbtn")
+		        self.togbtn.setVisible(False)
+		        self.togbtn.clicked.connect(self.summary)
+		        self.togbtn.setParent(self.mainpdf)
+		        self.togbtn.setFixedSize(32,48)
+		        
+		        self.sumFrame = QFrame()
+		        self.sumFrame.setFrameShape(QFrame.Shape.StyledPanel)
+		        self.sumFrame.setObjectName("frame")
+		        close = QPushButton("")
+		        close.setIcon(QIcon("assets/close.svg"))
+		        close.setObjectName("close")
+		        close.setFixedSize(20,20)
+		        close.clicked.connect(self.close)
+		        sumlay = QVBoxLayout(self.sumFrame)
+		        sumlay.addWidget(close,alignment=Qt.AlignmentFlag.AlignRight)
+		
+		        self.sumArea = QTextEdit()
+		        self.sumArea.setReadOnly(True)
+		        font = self.sumArea.font()
+		        font.setPointSize(10)
+		        self.sumArea.setFont(font)
+		        self.sumArea.setObjectName("Area")
+		        sumlay.addWidget(self.sumArea)
+		
+		        split.addWidget(self.scrll)
+		        split.addWidget(self.sumFrame)
+		        split.setSizes([1,0])
+		        self.split = split
+		
+		        #Navbar
+		        nav = QWidget()
+		        navbar = QHBoxLayout(nav)
+		        navbar.setContentsMargins(0,0,0,0)
+		        navbar.setSpacing(30)
+		        nav.setObjectName("navbar")
+		        opnfile = QPushButton("")
+		        opnfile.setIcon(QIcon("assets/open.svg"))
+		        opnfile.setProperty("class","tools")
+		        opnfile.clicked.connect(self.opnpdf)
+		        navbar.addWidget(opnfile)
+		
+		        pageprev = QPushButton("")
+		        pageprev.setIcon(QIcon("assets/prev.svg"))
+		        pageprev.setProperty("class","tools")
+		        navbar.addWidget(pageprev)
+		        pageprev.clicked.connect(self.toprev)
+		
+		        self.coffee = QPushButton()
+		        self.coffee.setIcon(QIcon("assets/cof.svg"))
+		        self.coffee.setObjectName("cofee")
+		        self.coffee.setFixedSize(45,45)
+		        self.coffee.clicked.connect(self.opnlink)
+		        self.coffee.setParent(self)
+		        self.coffee.move(self.width()-60,self.height()-60)
+		        self.coffee.raise_()
+		        self.coffee.show()
+		
+		        pagenxt = QPushButton("")
+		        pagenxt.setIcon(QIcon("assets/next.svg"))
+		        pagenxt.setProperty("class","tools")
+		        pagenxt.clicked.connect(self.tonxt)
+		        navbar.addWidget(pagenxt)
+		
+		        inzoom = QPushButton("")
+		        inzoom.setIcon(QIcon("assets/inzoom.svg"))
+		        inzoom.setProperty("class","tools")
+		        navbar.addWidget(inzoom)
+		        inzoom.clicked.connect(self.enlarge)
+		
+		        outzoom = QPushButton("")
+		        outzoom.setIcon(QIcon("assets/outzoom.svg"))
+		        outzoom.setProperty("class","tools")
+		        navbar.addWidget(outzoom)
+		        outzoom.clicked.connect(self.minimise)
+		
+		        self.mode = QPushButton("")
+		        self.mode.setCheckable(True)
+		        self.mode.setIcon(QIcon("assets/mouse.svg"))
+		        self.mode.setProperty("class","tools")
+		        self.mode.toggled.connect(self.startGest)
+		        navbar.addWidget(self.mode,Qt.AlignmentFlag.AlignRight)
+		
+		        self.scrll.verticalScrollBar().valueChanged.connect(self.pageScroll)
+		        navbar.addStretch()
+		        mainlayout.addWidget(nav)
+		        mainlayout.addWidget(self.split)
+		
+		        self.control.man.nextPage.connect(self.tonxt)
+		        self.control.man.prevPage.connect(self.toprev)
+		        self.control.man.takt.connect(self.gestSum)
+		        self.control.man.zoom.connect(self.gestZoom)
+		        
+		    
+		    def opnpdf(self):
+		        filepath,_ = QFileDialog.getOpenFileName(self,"Select File","","PDF Files (*.pdf);; All Files(*)")
+		        if filepath:
+		            try:
+		                self.page=0
+		                self.doc = fitz.open(filepath)
+		            except Exception as e:
+		                QMessageBox.warning(self,"Error","PDF Load Failed!")
+		            pixmp = render.render(self.doc,self.page,self.zoom)
+		            self.pdf.setVisible(True)
+		            self.togbtn.setVisible(True)
+		            self.pdf.setPixmap(pixmp)
+		            self.pdf.setFixedSize(pixmp.size())
+		            self.toggle()
+		        
+		    def tonxt(self):
+		        if not self.doc:
+		            return
+		        total = self.doc.page_count
+		        if self.page &gt;=total-1:
+		            return
+		        if self.page &lt; total-1:
+		            self.page+=1
+		            pixmp = render.render(self.doc,self.page,self.zoom)
+		            if pixmp is None:
+		                QMessageBox.warning(self,"Error","Unable to Render Page!")
+		            self.pdf.setPixmap(pixmp)
+		            self.pdf.setFixedSize(pixmp.size())
+		
+		            bar = self.scrll.verticalScrollBar()
+		            bar.blockSignals(True)
+		            bar.setValue(bar.minimum())
+		            bar.blockSignals(False)
+		            self.split.setSizes([1,0])
+		            self.togbtn.setIcon(QIcon("assets/sum.svg"))
+		            self.togbtn.setCheckable(False)
+		            self.togbtn.setCheckable(True)
+		            self.toggle()
+		    
+		    def toprev(self):
+		        if not self.doc:
+		            return
+		        total = self.doc.page_count
+		        if self.page &gt;0:
+		            self.page-=1
+		            pixmp = render.render(self.doc,self.page,self.zoom)
+		        else:
+		            return
+		        if pixmp is None:
+		                QMessageBox.warning(self,"Error","Unable to Render Page!")
+		        self.pdf.setPixmap(pixmp)
+		        self.pdf.setFixedSize(pixmp.size())
+		
+		        bar = self.scrll.verticalScrollBar()
+		        bar.blockSignals(True)
+		        bar.setValue(bar.maximum())
+		        bar.blockSignals(False)
+		        self.split.setSizes([1,0])
+		        self.togbtn.setIcon(QIcon("assets/sum.svg"))
+		        self.toggle()
+		        
+		
+		    def enlarge(self):
+		        if not self.doc:
+		            return
+		        self.zoom*= 1.25
+		        pixmp = render.render(self.doc,self.page,self.zoom)
+		        self.pdf.setPixmap(pixmp)
+		        self.pdf.setFixedSize(pixmp.size())
+		        self.toggle2()
+		        
+		    
+		    def minimise(self):
+		        if not self.doc:
+		            return
+		        self.zoom/=1.25
+		        pixmp = render.render(self.doc,self.page,self.zoom)
+		        self.pdf.setPixmap(pixmp)
+		        self.pdf.setFixedSize(pixmp.size())
+		        self.toggle2()
+		        
+		
+		    def pageScroll(self,value):
+		        if not self.doc:
+		            return
+		        bar = self.scrll.verticalScrollBar()
+		        min = bar.minimum()
+		        max = bar.maximum()
+		
+		        if value==max:
+		            self.tonxt()
+		        if value==min:
+		            self.toprev()
+		           
+		    def summary(self):
+		        if not self.doc:
+		            return
+		        curPage = self.doc.load_page(self.page)
+		        content = curPage.get_text('text')
+		        self.pageSum = summarise.pagesummarise(self.doc,self.page,content)
+		        html = markdown.markdown(self.pageSum)
+		        self.split.setSizes([600,200])
+		        self.togbtn.setVisible(False)
+		        self.sumArea.setText(html)
+		    
+		    def close(self):
+		        if not self.doc:
+		            return
+		        self.split.setSizes([1,0])
+		        self.togbtn.setVisible(True)
+		
+		            
+		    
+		    def resource_path(self, relative_path):
+		        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+		        return os.path.join(base_path, relative_path)
+		    
+		    def toggle2(self):
+		        QTimer.singleShot(0,self.toggle)
+		
+		    def toggle(self):
+		        if not self.doc and self.pdf.isVisible():
+		            return
+		        rect=self.pdf.geometry()
+		        x = rect.right()
+		        y = rect.center().y()-self.togbtn.height()//2
+		        self.togbtn.move(x,y)
+		        self.togbtn.raise_()
+		
+		    def resizeEvent(self,event):
+		        super().resizeEvent(event)
+		        self.toggle()
+		        self.coffee.move(self.width()-60,self.height()-60)
+		
+		    def checkstate(self):
+		        if self.control.man.active==True:
+		            self.mode.setIcon(QIcon("assets/hand.svg"))
+		        else:
+		            self.mode.setIcon(QIcon("assets/mouse.svg"))
+		
+		
+		    def startGest(self,state):
+		        if state == True or self.control.man.active==True:
+		            self.mode.setIcon(QIcon("assets/hand.svg"))
+		            self.control.start()
+		        if state == False or not self.control.man.active:
+		            self.control.stop()
+		            self.mode.setIcon(QIcon("assets/mouse.svg"))
+		
+		    def gestSum(self,enbled:bool):
+		        if enbled==True:
+		            self.summary()
+		        else:
+		            self.close()
+		
+		    def gestZoom(self,state:int):
+		        maxzoom = 3.0
+		        minzoom = 0.03
+		        if state==1 and self.zoom&lt;=maxzoom:
+		            self.enlarge()
+		        if state==-1 and self.zoom&gt;=minzoom:
+		            self.minimise()
+		
+		    def eventFilter(self,obj,event):
+		        if obj is self.pdf and event.type()==QEvent.Type.Wheel:
+		            if not self.doc:
+		                return True
+		            if event.modifiers() &amp; Qt.KeyboardModifier.ControlModifier:
+		                delta = event.angleDelta().y()
+		                if delta&gt;0:
+		                    self.enlarge()
+		                else:
+		                    self.minimise()
+		                return True
+		            
+		            return False
+		                
+		        return super().eventFilter(obj,event)
+		    
+		    def opnlink(self):
+		        webbrowser.open("https://buymeacoffee.com/_hrudu_lmmn_")
+		    
+	</src>
+	</file>
+</repo>

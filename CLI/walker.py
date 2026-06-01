@@ -33,7 +33,7 @@ def walk_dir(path:str):
 
     base_path = Path(path).resolve()
     for root,dirs,files in os.walk(path):
-        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS and not d.startswith(".") ]
+        dirs[:] = [d for d in dirs if d not in IGNORE_FOLDERS and not d.startswith(".") and not d.startswith("_") ]
 
         for file in files:
             isconfig = False

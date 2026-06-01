@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import sys
 from pathlib import Path
 from summary import Summariser
+import security
 
 def is_stdlib(module):
     
@@ -61,7 +62,8 @@ def gen_struct(extracted,reponame):
 
     tree = ET.ElementTree(root)
     ET.indent(tree)
-    tree.write("output.xml", encoding="utf-8", xml_declaration=True)
+    tree.write("structure.xml", encoding="utf-8", xml_declaration=True)
+    return Path("structure.xml").resolve()
         
     
 def gen_summ(extracted,reponame):
@@ -96,6 +98,7 @@ def gen_summ(extracted,reponame):
     files = ET.SubElement(root,"files")
 
     for file in extracted:
+        mod=[]
         if file.get('Fallback'):
             continue
         fs = summariser.summarise_file(file["file_name"],file["ext"],file["imports"],file["classes"],file["functions"])
@@ -103,12 +106,16 @@ def gen_summ(extracted,reponame):
 
         if file["imports"]:
                 imp = ET.SubElement(f,"imp")
-                imp.text = ",".join(file["imports"])
+                for im in file["imports"]:
+                    if im.split('.')[0] not in mod:
+                        mod.append(im.split('.')[0])
+                imp.text = ",".join(mod)
+            
 
         if file["functions"]:
             for func in file["functions"]:
                 fns = summariser.summarise_fun(file["ext"],{"n":func["name"],"p":func["params"]},func["body"])
-                fn = ET.SubElement(f,"fn",{"n":func["name"],"p":func["params"]})
+                fn = ET.SubElement(f,"fn",{"n":func["name"],"p":func["params"],"s":fns})
         
         if file["classes"]:
             for clas in file["classes"]:
@@ -129,3 +136,22 @@ def gen_summ(extracted,reponame):
     tree = ET.ElementTree(root)
     ET.indent(tree)
     tree.write("summarised.xml", encoding="utf-8", xml_declaration=True)
+    return Path("summarised.xml").resolve()
+
+
+def gen_concat(valid,reponame):
+    root = ET.Element("repo",{"n":str(reponame)})
+    
+    for file in valid:
+        with open(Path(file["abspath"]).resolve(),"r",encoding="utf8") as f:
+            content = f.read()
+        fl = ET.SubElement(root,"file",{"n":file["relpath"]})
+        src = ET.SubElement(fl,"src")
+        indented = "\n".join("\t\t" + line for line in content.splitlines())
+        indented = security.redact(indented)
+        src.text = "\n" + indented + "\n\t"
+    
+    tree = ET.ElementTree(root)
+    ET.indent(tree,space="\t")
+    tree.write("concat.xml",encoding="utf8",xml_declaration=True)
+    return Path("concat.xml").resolve()

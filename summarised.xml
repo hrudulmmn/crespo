@@ -1,71 +1,179 @@
 <?xml version='1.0' encoding='utf-8'?>
-<repo n="Files" s="Hand gesture recognition using OpenCV, MediaPipe, and PyQt6 for real-time processing.">
+<repo n="tars-chat" s="The tars-chat codebase is a Next.js application utilizing Convex for server-side functionality, built with Tailwind CSS and React, enabling real-time chat features and user authentication.">
   <meta>
-    <dep>cv2,mediapipe,numpy,PyQt6,fitz,groq,markdown</dep>
+    <dep>"@clerk/nextjs/server","tailwindcss","next",","@/lib/providers","next/font/google","next/navigation","@/components/layout/ChatLayout","@clerk/nextjs","@/lib/utils","react","@/convex/_generated/api","@/convex/_generated/dataModel","convex/react","lucide-react","@/components/chat/Sidebar","@/components/chat/ChatArea","@/hooks/useCurrentUser","@/hooks/useOnlineStatus","convex/values","convex/server","convex/react-clerk","clsx","tailwind-merge","date-fns"</dep>
   </meta>
   <files>
-    <f p="gesture.py" e=".py" s="DESCRIPTION: Handles gesture recognition using MediaPipe and OpenCV, with smoothing and triggering logic.">
-      <imp>cv2,time,math,mediapipe,numpy,PyQt6.QtCore</imp>
-      <cls n="Smoother" s="Exponential smoothing filter for landmark data.">
-        <fn n="__init__" p="(self,alpha=0.55)" />
-        <fn n="smooth" p="(self,landmarks)" />
-        <fn n="reset" p="(self)" />
-      </cls>
-      <cls n="GestureChecker" s="GestureChecker manages hand gesture detection and smoothing.">
-        <fn n="__init__" p="(self,min=75)" />
-        <fn n="trigger" p="(self,gesturename,detected,time)" />
-      </cls>
-      <cls n="Gesture" s="Gesture class manages hand movement detection and smoothing.">
-        <fn n="__init__" p="(self, parent =None)" />
-        <fn n="run" p="(self)" />
-        <fn n="fingUp" p="(smoothedNorm,tip,pip)" />
-      </cls>
-      <cls n="GestureMan" s="Gesture recognition and smoothing manager.">
-        <fn n="__init__" p="(self, parent = None)" />
-        <fn n="start" p="(self)" />
-        <fn n="stop" p="(self)" />
-      </cls>
+    <f p="middleware.ts" e=".ts" s="Middleware.ts serves as a Next.js server middleware, integrating Clerk authentication functionality.">
+      <imp>"@clerk/nextjs/server"</imp>
     </f>
-    <f p="main.py" e=".py" s="Main entry point for PyQt6-based graphical user interface application.">
-      <imp>sys,PyQt6.QtWidgets,Ui</imp>
+    <f p="next-env.d.ts" e=".ts" s="Defines type definitions for Next.js environment variables, providing a type-safe interface for accessing environment variables." />
+    <f p="next.config.js" e=".js" s="Configures Next.js application settings, exporting environment variables and site metadata." />
+    <f p="postcss.config.js" e=".js" s="Configures PostCSS to process CSS files, defining plugins and presets for CSS transformation." />
+    <f p="tailwind.config.ts" e=".ts" s="Configures Tailwind CSS settings and customizations for the application, extending the base Tailwind configuration.">
+      <imp>"tailwindcss"</imp>
     </f>
-    <f p="render.py" e=".py" s="Renders PDF pages to images using fitz and PyQt6.">
-      <imp>fitz,base64,PyQt6.QtWidgets,PyQt6.QtGui</imp>
-      <fn n="render" p="(doc,pgno,zoom)" />
-      <fn n="exportImg" p="(doc,pgno)" />
+    <f p="app\layout.tsx" e=".tsx" s="The `app\layout.tsx` file defines the root layout component, wrapping application content with global providers and a basic HTML structure.">
+      <imp>"next",","@/lib/providers","next/font/google"</imp>
+      <fn n="RootLayout" p="({&#10;  children,&#10;}: {&#10;  children: React.ReactNode;&#10;})" />
+      <cls n="html" s="The `html` class represents a JSX component responsible for rendering HTML elements, encapsulating layout and styling logic.&#10;&#10;Class methods: None." />
+      <cls n="Providers" s="The `Providers` class manages a registry of services, encapsulating their creation, injection, and lifecycle management.&#10;&#10;Class methods: None." />
+      <cls n="body" s="The `body` class represents the main content area of a UI component, managing its layout and structure.&#10;&#10;No methods are defined in this class." />
     </f>
-    <f p="summarise.py" e=".py" s="Summarises PDF pages using AI chat completions.">
-      <imp>os,render,groq</imp>
-      <fn n="pagesummarise" p="(doc,page,conts)" />
-      <fn n="imgText" p="(doc,page)" />
+    <f p="app\page.tsx" e=".tsx" s="The `app/page.tsx` file handles page navigation logic, redirecting users to sign-in or chat pages based on authentication status.">
+      <imp>"@clerk/nextjs/server","next/navigation"</imp>
+      <fn n="Home" p="()" />
     </f>
-    <f p="test.py" e=".py" s="Unit tests for PDF processing using fitz and groq libraries.">
-      <imp>base64,fitz,groq</imp>
+    <f p="app\chat\layout.tsx" e=".tsx" s="The ChatLayout function in layout.tsx renders a chat interface, conditionally redirecting to sign-in if the user is not authenticated.">
+      <imp>"@clerk/nextjs/server","next/navigation"</imp>
+      <fn n="ChatLayout" p="({ children }: { children: React.ReactNode })" />
     </f>
-    <f p="test2.py" e=".py" s="Empty Python file with no functional responsibilities." />
-    <f p="Ui.py" e=".py" s="DESCRIPTION: Ui.py handles PDF viewing and manipulation with gesture control. It utilizes PyQt6 for the graphical interface and integrates with other modules for rendering and summarization.">
-      <imp>webbrowser,markdown,sys,ctypes,fitz,render,summarise,os,PyQt6,PyQt6.QtWidgets,PyQt6.QtGui,PyQt6.QtCore,gesture</imp>
-      <cls n="Window" s="DESCRIPTION: Manages window operations and gestures.">
-        <fn n="__init__" p="(self)" />
-        <fn n="opnpdf" p="(self)" />
-        <fn n="tonxt" p="(self)" />
-        <fn n="toprev" p="(self)" />
-        <fn n="enlarge" p="(self)" />
-        <fn n="minimise" p="(self)" />
-        <fn n="pageScroll" p="(self,value)" />
-        <fn n="summary" p="(self)" />
-        <fn n="close" p="(self)" />
-        <fn n="resource_path" p="(self, relative_path)" />
-        <fn n="toggle2" p="(self)" />
-        <fn n="toggle" p="(self)" />
-        <fn n="resizeEvent" p="(self,event)" />
-        <fn n="checkstate" p="(self)" />
-        <fn n="startGest" p="(self,state)" />
-        <fn n="gestSum" p="(self,enbled:bool)" />
-        <fn n="gestZoom" p="(self,state:int)" />
-        <fn n="eventFilter" p="(self,obj,event)" />
-        <fn n="opnlink" p="(self)" />
-      </cls>
+    <f p="app\chat\page.tsx" e=".tsx" s="The `ChatPage` function renders the `ChatLayout` component, serving as the primary chat interface.">
+      <imp>"@/components/layout/ChatLayout"</imp>
+      <fn n="ChatPage" p="()" />
+    </f>
+    <f p="app\sign-in\page.tsx" e=".tsx" s="The `page.tsx` file defines the UI structure and layout for the sign-in page, rendering a Clerk-provided sign-in component.">
+      <imp>"@clerk/nextjs"</imp>
+      <fn n="SignInPage" p="()" />
+      <cls n="p" s="The `p` class represents a React component, likely a utility or wrapper component, with no explicitly defined methods." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Class methods: None." />
+      <cls n="h1" s="The `h1` class represents a top-level HTML header element, encapsulating its properties and behavior for rendering and styling purposes.&#10;&#10;No methods are defined for this class." />
+    </f>
+    <f p="app\sign-up\page.tsx" e=".tsx" s="The `SignUpPage` function renders a sign-up page with a header and a Clerk-provided sign-up form component.">
+      <imp>"@clerk/nextjs"</imp>
+      <fn n="SignUpPage" p="()" />
+      <cls n="p" s="Summary: This class represents a stateless, functional component that likely serves as a container or wrapper for other components, with no explicit methods." />
+      <cls n="h1" s="The `h1` class represents a top-level HTML header element, managing its properties and behavior in a React application.&#10;&#10;No methods are defined for this class." />
+      <cls n="div" s="Represents a generic HTML div element, encapsulating its properties and behavior for rendering and styling purposes.&#10;&#10;No methods are defined in this class." />
+    </f>
+    <f p="components\chat\Avatar.tsx" e=".tsx" s="The Avatar.tsx file renders a customizable avatar component with dynamic color generation and online status indicators.">
+      <imp>"@/lib/utils"</imp>
+      <fn n="getColor" p="(name: string)" />
+      <fn n="Avatar" p="({ imageUrl, name, size = &quot;md&quot;, isOnline }: AvatarProps)" />
+      <cls n="AvatarProps" s="The AvatarProps class represents and manages avatar properties, encapsulating data and behavior related to avatar configuration and rendering.&#10;&#10;No methods are defined in this class." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Class methods: None." />
+    </f>
+    <f p="components\chat\ChatArea.tsx" e=".tsx" s="This file, ChatArea.tsx, is responsible for rendering a chat interface, handling user input, and managing conversation state, including typing indicators and message sending. It leverages React, Convex, and Lucide libraries to interact with the application's">
+      <imp>"react","@/convex/_generated/api","@/convex/_generated/dataModel","convex/react","lucide-react",","@/lib/utils"</imp>
+      <fn n="ChatArea" p="({ conversationId, currentClerkId, onBack }: ChatAreaProps)" />
+      <fn n="scrollToBottom" p="()" />
+      <fn n="handleInputChange" p="(e: React.ChangeEvent&lt;HTMLInputElement&gt;)" />
+      <fn n="handleSend" p="()" />
+      <fn n="handleKeyDown" p="(e: React.KeyboardEvent)" />
+      <fn n="MessageSkeleton" p="()" />
+      <cls n="ChatAreaProps" s="Summary: The ChatAreaProps class represents and manages properties for a chat area component, encapsulating its configuration and layout settings." />
+      <cls n="p" s="Summary: The `p` class is an empty class with no methods, suggesting a placeholder or a potential future implementation." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Class methods: None." />
+      <cls n="span" s="The `span` class represents a UI component for rendering text with customizable styles and attributes, encapsulating layout and rendering logic.&#10;&#10;Class methods: None." />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;Summary of class methods: No methods are defined in this class." />
+      <cls n="h2" s="The `h2` class represents a React component responsible for rendering a level 2 heading element.&#10;&#10;Its methods are currently empty, indicating a simple, stateless component with no custom logic." />
+    </f>
+    <f p="components\chat\ConversationItem.tsx" e=".tsx" s="This file renders a single conversation item in a chat interface, fetching and displaying relevant user and message data.">
+      <imp>"convex/react","@/lib/utils","@/convex/_generated/api",","@/convex/_generated/dataModel"</imp>
+      <fn n="ConversationItem" p="({&#10;  conversation,&#10;  currentClerkId,&#10;  isSelected,&#10;  onSelect,&#10;  searchQuery,&#10;}: ConversationItemProps)" />
+      <cls n="ConversationItemProps" s="Summary: This class represents a set of properties for a conversation item, encapsulating metadata and state relevant to conversation management." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Summary of class methods: None, as this is a simple React component class." />
+      <cls n="span" s="The `span` class represents a UI component for rendering a span of text with customizable styles and attributes.&#10;&#10;Class methods: None." />
+      <cls n="p" s="Summary: The `p` class is an empty class with no methods, suggesting a placeholder or a potential future implementation." />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;Summary of class methods: None, as this is a React functional component with no explicit methods." />
+    </f>
+    <f p="components\chat\CreateGroupModal.tsx" e=".tsx" s="This file defines a React modal component for creating a group, handling user selection and group creation via Convex API mutations.">
+      <imp>"react","lucide-react","@/convex/_generated/api","@/convex/_generated/dataModel","convex/react",","@/lib/utils"</imp>
+      <fn n="CreateGroupModal" p="({ currentClerkId, onClose, onCreated }: CreateGroupModalProps)" />
+      <fn n="toggleUser" p="(clerkId: string)" />
+      <fn n="handleCreate" p="()" />
+      <cls n="CreateGroupModalProps" s="Creates and manages modal props for creating a new group, encapsulating UI state and behavior.&#10;&#10;No methods are defined in this class." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Summary of class methods: None, as this is a simple React component class with no methods." />
+      <cls n="h2" s="The `h2` class represents a React component responsible for rendering a level 2 heading element.&#10;&#10;Its methods are currently empty, implying a simple, stateless implementation." />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;No methods are defined for this class." />
+      <cls n="p" s="Summary: The `p` class is an empty class with no methods, suggesting a placeholder or a potential future implementation." />
+    </f>
+    <f p="components\chat\Message.tsx" e=".tsx" s="This file renders a single chat message component, handling user interactions, reactions, and deletion via Convex API mutations.">
+      <imp>"react","lucide-react","@/convex/_generated/dataModel","convex/react","@/convex/_generated/api",","@/lib/utils"</imp>
+      <fn n="Message" p="({&#10;  message,&#10;  isMine,&#10;  senderUser,&#10;  showAvatar,&#10;  showName,&#10;  currentClerkId,&#10;  isGroup,&#10;}: MessageProps)" />
+      <fn n="handleDelete" p="()" />
+      <fn n="handleReaction" p="(emoji: string)" />
+      <cls n="MessageProps" s="MessageProps represents a data structure for message properties, encapsulating metadata and attributes associated with a message.&#10;&#10;Summary of class methods: None, as the class is currently empty." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Its methods are currently empty, implying a focus on component properties and event handling." />
+      <cls n="span" s="The `span` class represents a UI component for rendering text with customizable styles and attributes, encapsulating layout and rendering responsibilities.&#10;&#10;Class methods: None." />
+      <cls n="p" s="Summary: The `p` class is an empty class with no methods, suggesting a placeholder or a potential future implementation." />
+      <cls n="em" s="The `em` class represents a high-level abstraction for managing event-driven state machines, encapsulating state transitions and event handling logic.&#10;&#10;Class methods: None (empty)" />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;No methods are defined in this class." />
+    </f>
+    <f p="components\chat\Sidebar.tsx" e=".tsx" s="The Sidebar component manages conversation and user lists, handling state, queries, and modal interactions for a chat application.">
+      <imp>"react","@/convex/_generated/api","convex/react","@/convex/_generated/dataModel","@clerk/nextjs","lucide-react",","@/lib/utils"</imp>
+      <fn n="Sidebar" p="({ currentClerkId, selectedConversationId, onSelectConversation }: SidebarProps)" />
+      <fn n="ConversationSkeleton" p="()" />
+      <cls n="SidebarProps" s="The SidebarProps class represents and manages properties for a sidebar component, encapsulating its configuration and state.&#10;&#10;No methods are defined in this class." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Summary of class methods: None, as this is a simple React component class with no explicit methods." />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;No methods are defined in this class." />
+      <cls n="h1" s="The `h1` class represents a top-level HTML header element, encapsulating its properties and behavior for rendering and styling purposes.&#10;&#10;No methods are defined for this class." />
+      <cls n="p" s="Summary: This class represents a stateless, functional component that likely serves as a container or wrapper for other components, with no explicit methods." />
+    </f>
+    <f p="components\chat\TypingIndicator.tsx" e=".tsx" s="The TypingIndicator component renders a visual indicator of user typing activity, accompanied by a text message.">
+      <fn n="TypingIndicator" p="({ text }: { text: string })" />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Summary of class methods: None, as this is a simple React component class definition." />
+      <cls n="span" s="The `span` class represents a UI component for rendering text with customizable styles and layout, encapsulating semantic meaning and visual presentation.&#10;&#10;Class methods: None." />
+    </f>
+    <f p="components\chat\UserSearch.tsx" e=".tsx" s="This file renders a user search component, utilizing Convex API to fetch and display users, and handles user selection via direct conversation creation.">
+      <imp>"convex/react","lucide-react",","@/convex/_generated/dataModel","@/convex/_generated/api"</imp>
+      <fn n="UserSearch" p="({ currentClerkId, searchQuery, onSelectUser }: UserSearchProps)" />
+      <fn n="handleSelectUser" p="(otherClerkId: string)" />
+      <cls n="UserSearchProps" s="UserSearchProps represents a set of properties for user search functionality, encapsulating configuration and state required for search operations.&#10;&#10;No methods are defined in this class." />
+      <cls n="button" s="Represents a UI button component, encapsulating its visual and interactive properties.&#10;&#10;Summary of class methods: None, as this is a React functional component with no explicit methods." />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Summary of class methods: None, as this class is a simple React component with no custom methods." />
+      <cls n="p" s="Summary: The `p` class is an abstract representation of a page element, encapsulating layout and styling responsibilities. &#10;&#10;Summary of class methods: No methods are defined for this class." />
+      <cls n="span" s="The `span` class represents a UI component for rendering a span of text with customizable styles and attributes.&#10;&#10;It provides no methods, implying it is a simple, stateless React component." />
+    </f>
+    <f p="components\layout\ChatLayout.tsx" e=".tsx" s="The ChatLayout component renders a chat interface with a sidebar and chat area, handling conversation selection and mobile view state.">
+      <imp>"react","@/components/chat/Sidebar","@clerk/nextjs","@/components/chat/ChatArea","@/convex/_generated/dataModel","@/hooks/useCurrentUser","@/hooks/useOnlineStatus"</imp>
+      <fn n="ChatLayout" p="()" />
+      <fn n="handleSelectConversation" p="(id: Id&lt;&quot;conversations&quot;&gt;)" />
+      <fn n="handleBack" p="()" />
+      <cls n="div" s="The `div` class represents a reusable React component for rendering a generic HTML div element with customizable styles and attributes.&#10;&#10;Class methods: None." />
+      <cls n="h2" s="The `h2` class represents a React component responsible for rendering a level 2 heading element.&#10;&#10;It provides no methods, implying its primary purpose is as a simple JSX element." />
+      <cls n="p" s="The `p` class represents a JSX element, managing its properties and children, serving as a fundamental building block for React UI components.&#10;&#10;No methods are defined for this class." />
+    </f>
+    <f p="convex\auth.config.ts" e=".ts" s="Configures authentication settings for the Convex application, exporting a configuration object." />
+    <f p="convex\conversations.ts" e=".ts" s="Exports server-side conversation logic, leveraging generated server code and shared values from the `convex/values` module.">
+      <imp>"convex/values","</imp>
+    </f>
+    <f p="convex\messages.ts" e=".ts" s="Defines and exports message types and constants used by the Convex server and client applications.">
+      <imp>"convex/values","</imp>
+    </f>
+    <f p="convex\readReceipts.ts" e=".ts" s="Handles receipt reading from Convex, utilizing generated server and values imports for data retrieval.">
+      <imp>"convex/values","</imp>
+    </f>
+    <f p="convex\schema.ts" e=".ts" s="Defines the schema for the Convex server, importing and exporting type definitions from 'convex/server' and 'convex/values'.">
+      <imp>"convex/server","convex/values"</imp>
+    </f>
+    <f p="convex\typing.ts" e=".ts" s="Defines type definitions for Convex values and server interactions, leveraging generated server types.">
+      <imp>"convex/values","</imp>
+    </f>
+    <f p="convex\users.ts" e=".ts" s="Exports user-related values and server-side generated types from the 'convex/values' and './_generated/server' modules.">
+      <imp>"convex/values","</imp>
+    </f>
+    <f p="hooks\useCurrentUser.ts" e=".ts" s="The `useCurrentUser` hook fetches and updates the user data, returning the current user and their database counterpart.">
+      <imp>"@clerk/nextjs","react","convex/react","@/convex/_generated/api"</imp>
+      <fn n="useCurrentUser" p="()" />
+    </f>
+    <f p="hooks\useOnlineStatus.ts" e=".ts" s="This file provides a React hook (`useOnlineStatus`) to manage the online status of a clerk, updating it based on visibility changes and page unload events.">
+      <imp>"convex/react","@/convex/_generated/api","react"</imp>
+      <fn n="useOnlineStatus" p="(clerkId: string | undefined)" />
+      <fn n="handleVisibilityChange" p="()" />
+      <fn n="handleBeforeUnload" p="()" />
+    </f>
+    <f p="lib\providers.tsx" e=".tsx" s="Provides a React context with Clerk authentication and Convex data access, wrapping children components with necessary providers.">
+      <imp>"@clerk/nextjs","react","convex/react","convex/react-clerk"</imp>
+      <fn n="Providers" p="({ children }: { children: ReactNode })" />
+      <cls n="ClerkProvider" s="The `ClerkProvider` class manages a repository of clerk instances, responsible for creating, retrieving, and updating clerks as needed.&#10;&#10;Summary of class methods: None provided, implying a simple data access or management interface." />
+      <cls n="ConvexProviderWithClerk" s="The ConvexProviderWithClerk class manages a Convex optimization provider with a Clerk authentication integration, encapsulating optimization logic and authentication credentials.&#10;&#10;Class methods: None explicitly listed, implying a data-driven or event-driven architecture." />
+    </f>
+    <f p="lib\utils.ts" e=".ts" s="This file provides utility functions for formatting time and class names, leveraging Tailwind CSS and date-fns libraries.">
+      <imp>"clsx","tailwind-merge","date-fns"</imp>
+      <fn n="cn" p="(...inputs: ClassValue[])" />
+      <fn n="formatMessageTime" p="(timestamp: number)" />
+      <fn n="formatConversationTime" p="(timestamp: number)" />
     </f>
   </files>
 </repo>

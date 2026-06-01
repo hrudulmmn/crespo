@@ -3,6 +3,7 @@ import os
 import walker
 import parse
 import generate
+import counter
 from pathlib import Path
 
 def main():
@@ -10,8 +11,9 @@ def main():
         prog="crespo",description="Know your codebase"
     )
 
-    mode = "structure"
-    parser.add_argument("path",type=str,help="the root directory path of your codebase")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("path",type=str,help="the root directory path of your codebase")
+    group.add_argument("--git",help="GitHub URL for required repo")
     parser.add_argument("--mode",choices=["structure","summarize","concat"],default="structure",help="Select Mode for Output")
 
     args = parser.parse_args()
@@ -34,10 +36,16 @@ def main():
         extracted.append(signature)
     print(extracted)
 
+    out_path=None
+
     if mode=="structure":
-        generate.gen_struct(extracted,reponame)
+        out_path=generate.gen_struct(extracted,reponame)
     elif mode=="summarize":
-        generate.gen_summ(extracted,reponame)
+        out_path=generate.gen_summ(extracted,reponame)
+    elif mode=="concat":
+        out_path = generate.gen_concat(valid_files,reponame=reponame)
+
+    counter.tok_count(valid_files,out_path)
 
     
 
