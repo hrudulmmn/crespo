@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import sys
+import os
 from pathlib import Path
 from summary import Summariser
 import security
@@ -8,6 +9,8 @@ def is_stdlib(module):
     
     return module in sys.stdlib_module_names
 
+def _out_path(filename):
+    return  Path(os.getcwd())/filename
 
 def gen_struct(extracted,reponame):
     root = ET.Element("repo",{"n":str(reponame)})
@@ -60,22 +63,21 @@ def gen_struct(extracted,reponame):
             enum = ET.SubElement(f,"enum",{"n":file["enum"]})
 
 
+    out = _out_path("structure.xml")
     tree = ET.ElementTree(root)
     ET.indent(tree)
-    tree.write("structure.xml", encoding="utf-8", xml_declaration=True)
-    return Path("structure.xml").resolve()
+    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    return out.resolve()
         
     
-def gen_summ(extracted,reponame):
+def gen_summ(extracted, reponame):
     summariser = Summariser()
-    root = ET.Element("repo",{"n":str(reponame)})
-    meta = ET.SubElement(root,"meta")
-    deps = ET.SubElement(meta,"dep")
-    imports=[]
-    pathstem=[]
-    filenames=[]
-    method=[]
-
+    root = ET.Element("repo", {"n": str(reponame)})
+    meta = ET.SubElement(root, "meta")
+    deps = ET.SubElement(meta, "dep")
+    imports = []
+    pathstem = []
+    filenames = []
 
     for file in extracted:
         if file.get('Fallback'):
@@ -90,53 +92,93 @@ def gen_summ(extracted,reponame):
             module = dep.split(".")[0]
             if not is_stdlib(module) and module not in pathstem and module not in imports:
                 imports.append(module)
-    
-    deps.text = ",".join(imports)
-    s = summariser.summarise_repo(reponame,imports,files=filenames)
-    root.set("s",s)
 
-    files = ET.SubElement(root,"files")
+    deps.text = ",".join(imports)
+    s = summariser.summarise_repo(reponame, imports, files=filenames)
+    root.set("s", s)
+
+    # ── build batch input ─────────────────────────────────────────────────
+    files_data = []
+    valid_files = []
 
     for file in extracted:
-        mod=[]
         if file.get('Fallback'):
             continue
-        fs = summariser.summarise_file(file["file_name"],file["ext"],file["imports"],file["classes"],file["functions"])
-        f = ET.SubElement(files,"f",{"p":file["file_name"],"e":file["ext"],"s":fs})
+        files_data.append({
+            "path":      file["file_name"],
+            "lang":      file["ext"],
+            "imports":   file["imports"],
+            "classes":   file["classes"],
+            "functions": file["functions"],
+        })
+        valid_files.append(file)
+
+    # ── batched summarisation with live spinner ───────────────────────────
+    BATCH_SIZE = 20
+    all_summaries = []
+
+    try:
+        import cli
+        with cli.summary_progress_context(len(files_data)) as advance:
+            for i in range(0, len(files_data), BATCH_SIZE):
+                chunk = files_data[i : i + BATCH_SIZE]
+                batch_summaries = summariser.summarise_files_batch(chunk)
+                all_summaries.extend(batch_summaries)
+                advance(
+                    len(chunk),
+                    label=f"batch {i // BATCH_SIZE + 1} / {((len(files_data) - 1) // BATCH_SIZE) + 1}"
+                )
+    except ImportError:
+        # no UI — run silently
+        for i in range(0, len(files_data), BATCH_SIZE):
+            chunk = files_data[i : i + BATCH_SIZE]
+            all_summaries.extend(summariser.summarise_files_batch(chunk))
+
+    # ── build XML ─────────────────────────────────────────────────────────
+    files_el = ET.SubElement(root, "files")
+
+    for file, fs in zip(valid_files, all_summaries):
+        mod = []
+        f = ET.SubElement(files_el, "f", {
+            "p": file["file_name"],
+            "e": file["ext"],
+            "s": fs
+        })
 
         if file["imports"]:
-                imp = ET.SubElement(f,"imp")
-                for im in file["imports"]:
-                    if im.split('.')[0] not in mod:
-                        mod.append(im.split('.')[0])
-                imp.text = ",".join(mod)
-            
+            imp = ET.SubElement(f, "imp")
+            for im in file["imports"]:
+                if im.split('.')[0] not in mod:
+                    mod.append(im.split('.')[0])
+            imp.text = ",".join(mod)
 
         if file["functions"]:
             for func in file["functions"]:
-                fns = summariser.summarise_fun(file["ext"],{"n":func["name"],"p":func["params"]},func["body"])
-                fn = ET.SubElement(f,"fn",{"n":func["name"],"p":func["params"],"s":fns})
-        
+                ET.SubElement(f, "fn", {
+                    "n": func["name"],
+                    "p": func["params"]
+                })
+
         if file["classes"]:
             for clas in file["classes"]:
-                cls = ET.SubElement(f,"cls",{"n":clas})
+                cls = ET.SubElement(f, "cls", {"n": clas})
                 for func in file["classes"][clas]:
-                    fn = ET.SubElement(cls,"fn",{"n":func["name"],"p":func["params"]})
-                    method.append({"n":func["name"],"p":func["params"]})
-                cs = summariser.summarise_class(clas,file["ext"],method_signature=method)
-                cls.set("s",cs)
-        
+                    ET.SubElement(cls, "fn", {
+                        "n": func["name"],
+                        "p": func["params"]
+                    })
+
         if file["struct"]:
-            struct = ET.SubElement(f,"struct",{"n":file["struct"]})
-        
+            ET.SubElement(f, "struct", {"n": file["struct"]})
+
         if file["enum"]:
-            enum = ET.SubElement(f,"enum",{"n":file["enum"]})
+            ET.SubElement(f, "enum", {"n": file["enum"]})
 
-
+    out = _out_path("summary.xml")
     tree = ET.ElementTree(root)
     ET.indent(tree)
-    tree.write("summarised.xml", encoding="utf-8", xml_declaration=True)
-    return Path("summarised.xml").resolve()
+    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    return out.resolve()
 
 
 def gen_concat(valid,reponame):
@@ -151,7 +193,8 @@ def gen_concat(valid,reponame):
         indented = security.redact(indented)
         src.text = "\n" + indented + "\n\t"
     
+    out = _out_path("concat.xml")
     tree = ET.ElementTree(root)
-    ET.indent(tree,space="\t")
-    tree.write("concat.xml",encoding="utf8",xml_declaration=True)
-    return Path("concat.xml").resolve()
+    ET.indent(tree)
+    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    return out.resolve()

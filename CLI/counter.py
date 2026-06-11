@@ -16,5 +16,4 @@ def tok_count(valid,out):
         outcontent = o.read()
     outtok = len(counter.encode(outcontent))
 
-    print("Token for Original File:",total)
-    print("Token for Output File:",outtok)
+    return total,outtok

@@ -1,179 +1,71 @@
 <?xml version='1.0' encoding='utf-8'?>
-<repo n="tars-chat">
+<repo n="Kara">
   <meta>
-    <dep>"@clerk/nextjs/server","tailwindcss","next",","next/font/google","@/lib/providers","next/navigation","@/components/layout/ChatLayout","@clerk/nextjs","@/lib/utils","react","convex/react","lucide-react","@/convex/_generated/api","@/convex/_generated/dataModel","@/components/chat/Sidebar","@/components/chat/ChatArea","@/hooks/useCurrentUser","@/hooks/useOnlineStatus","convex/values","convex/server","convex/react-clerk","clsx","tailwind-merge","date-fns"</dep>
+    <dep>cv2,numpy,mediapipe,PyQt6,fitz,groq,markdown</dep>
   </meta>
   <files>
-    <f p="middleware.ts" e=".ts">
-      <imp>"@clerk/nextjs/server"</imp>
+    <f p="gesture.py" e=".py">
+      <imp>cv2,numpy,math,mediapipe,time,PyQt6.QtCore</imp>
+      <cls n="Smoother">
+        <fn n="__init__" p="(self,alpha=0.55)" />
+        <fn n="smooth" p="(self,landmarks)" />
+        <fn n="reset" p="(self)" />
+      </cls>
+      <cls n="GestureChecker">
+        <fn n="__init__" p="(self,min=75)" />
+        <fn n="trigger" p="(self,gesturename,detected,time)" />
+      </cls>
+      <cls n="Gesture">
+        <fn n="__init__" p="(self, parent =None)" />
+        <fn n="run" p="(self)" />
+        <fn n="fingUp" p="(smoothedNorm,tip,pip)" />
+      </cls>
+      <cls n="GestureMan">
+        <fn n="__init__" p="(self, parent = None)" />
+        <fn n="start" p="(self)" />
+        <fn n="stop" p="(self)" />
+      </cls>
     </f>
-    <f p="next-env.d.ts" e=".ts" />
-    <f p="next.config.js" e=".js" />
-    <f p="postcss.config.js" e=".js" />
-    <f p="tailwind.config.ts" e=".ts">
-      <imp>"tailwindcss"</imp>
+    <f p="main.py" e=".py">
+      <imp>sys,PyQt6.QtWidgets,Ui</imp>
     </f>
-    <f p="app\layout.tsx" e=".tsx">
-      <imp>"next","./globals.css","next/font/google","@/lib/providers"</imp>
-      <fn n="RootLayout" p="({&#10;  children,&#10;}: {&#10;  children: React.ReactNode;&#10;})" />
-      <cls n="html" />
-      <cls n="Providers" />
-      <cls n="body" />
+    <f p="render.py" e=".py">
+      <imp>fitz,base64,PyQt6.QtWidgets,PyQt6.QtGui</imp>
+      <fn n="render" p="(doc,pgno,zoom)" />
+      <fn n="exportImg" p="(doc,pgno)" />
     </f>
-    <f p="app\page.tsx" e=".tsx">
-      <imp>"@clerk/nextjs/server","next/navigation"</imp>
-      <fn n="Home" p="()" />
+    <f p="summarise.py" e=".py">
+      <imp>os,render,groq</imp>
+      <fn n="pagesummarise" p="(doc,page,conts)" />
+      <fn n="imgText" p="(doc,page)" />
     </f>
-    <f p="app\chat\layout.tsx" e=".tsx">
-      <imp>"@clerk/nextjs/server","next/navigation"</imp>
-      <fn n="ChatLayout" p="({ children }: { children: React.ReactNode })" />
+    <f p="test.py" e=".py">
+      <imp>base64,fitz,groq</imp>
     </f>
-    <f p="app\chat\page.tsx" e=".tsx">
-      <imp>"@/components/layout/ChatLayout"</imp>
-      <fn n="ChatPage" p="()" />
-    </f>
-    <f p="app\sign-in\page.tsx" e=".tsx">
-      <imp>"@clerk/nextjs"</imp>
-      <fn n="SignInPage" p="()" />
-      <cls n="div" />
-      <cls n="p" />
-      <cls n="h1" />
-    </f>
-    <f p="app\sign-up\page.tsx" e=".tsx">
-      <imp>"@clerk/nextjs"</imp>
-      <fn n="SignUpPage" p="()" />
-      <cls n="h1" />
-      <cls n="div" />
-      <cls n="p" />
-    </f>
-    <f p="components\chat\Avatar.tsx" e=".tsx">
-      <imp>"@/lib/utils"</imp>
-      <fn n="getColor" p="(name: string)" />
-      <fn n="Avatar" p="({ imageUrl, name, size = &quot;md&quot;, isOnline }: AvatarProps)" />
-      <cls n="AvatarProps" />
-      <cls n="div" />
-    </f>
-    <f p="components\chat\ChatArea.tsx" e=".tsx">
-      <imp>"react","convex/react","lucide-react","@/convex/_generated/api","@/convex/_generated/dataModel","./Avatar","./Message","./TypingIndicator","@/lib/utils"</imp>
-      <fn n="ChatArea" p="({ conversationId, currentClerkId, onBack }: ChatAreaProps)" />
-      <fn n="scrollToBottom" p="()" />
-      <fn n="handleInputChange" p="(e: React.ChangeEvent&lt;HTMLInputElement&gt;)" />
-      <fn n="handleSend" p="()" />
-      <fn n="handleKeyDown" p="(e: React.KeyboardEvent)" />
-      <fn n="MessageSkeleton" p="()" />
-      <cls n="ChatAreaProps" />
-      <cls n="div" />
-      <cls n="p" />
-      <cls n="button" />
-      <cls n="span" />
-      <cls n="h2" />
-    </f>
-    <f p="components\chat\ConversationItem.tsx" e=".tsx">
-      <imp>"convex/react","@/convex/_generated/api","@/convex/_generated/dataModel","./Avatar","@/lib/utils"</imp>
-      <fn n="ConversationItem" p="({&#10;  conversation,&#10;  currentClerkId,&#10;  isSelected,&#10;  onSelect,&#10;  searchQuery,&#10;}: ConversationItemProps)" />
-      <cls n="ConversationItemProps" />
-      <cls n="div" />
-      <cls n="span" />
-      <cls n="p" />
-      <cls n="button" />
-    </f>
-    <f p="components\chat\CreateGroupModal.tsx" e=".tsx">
-      <imp>"react","lucide-react","@/convex/_generated/dataModel","convex/react","@/convex/_generated/api","./Avatar","@/lib/utils"</imp>
-      <fn n="CreateGroupModal" p="({ currentClerkId, onClose, onCreated }: CreateGroupModalProps)" />
-      <fn n="toggleUser" p="(clerkId: string)" />
-      <fn n="handleCreate" p="()" />
-      <cls n="CreateGroupModalProps" />
-      <cls n="div" />
-      <cls n="button" />
-      <cls n="h2" />
-      <cls n="p" />
-    </f>
-    <f p="components\chat\Message.tsx" e=".tsx">
-      <imp>"react","lucide-react","@/convex/_generated/dataModel","convex/react","@/convex/_generated/api","./Avatar","@/lib/utils"</imp>
-      <fn n="Message" p="({&#10;  message,&#10;  isMine,&#10;  senderUser,&#10;  showAvatar,&#10;  showName,&#10;  currentClerkId,&#10;  isGroup,&#10;}: MessageProps)" />
-      <fn n="handleDelete" p="()" />
-      <fn n="handleReaction" p="(emoji: string)" />
-      <cls n="MessageProps" />
-      <cls n="div" />
-      <cls n="button" />
-      <cls n="span" />
-      <cls n="p" />
-      <cls n="em" />
-    </f>
-    <f p="components\chat\Sidebar.tsx" e=".tsx">
-      <imp>"react","@/convex/_generated/dataModel","@clerk/nextjs","@/convex/_generated/api","convex/react","lucide-react","./ConversationItem","./UserSearch","./CreateGroupModal","@/lib/utils"</imp>
-      <fn n="Sidebar" p="({ currentClerkId, selectedConversationId, onSelectConversation }: SidebarProps)" />
-      <fn n="ConversationSkeleton" p="()" />
-      <cls n="SidebarProps" />
-      <cls n="div" />
-      <cls n="h1" />
-      <cls n="button" />
-      <cls n="p" />
-    </f>
-    <f p="components\chat\TypingIndicator.tsx" e=".tsx">
-      <fn n="TypingIndicator" p="({ text }: { text: string })" />
-      <cls n="div" />
-      <cls n="span" />
-    </f>
-    <f p="components\chat\UserSearch.tsx" e=".tsx">
-      <imp>"convex/react","lucide-react","@/convex/_generated/dataModel","./Avatar","@/convex/_generated/api"</imp>
-      <fn n="UserSearch" p="({ currentClerkId, searchQuery, onSelectUser }: UserSearchProps)" />
-      <fn n="handleSelectUser" p="(otherClerkId: string)" />
-      <cls n="UserSearchProps" />
-      <cls n="button" />
-      <cls n="p" />
-      <cls n="div" />
-      <cls n="span" />
-    </f>
-    <f p="components\layout\ChatLayout.tsx" e=".tsx">
-      <imp>"react","@/components/chat/Sidebar","@clerk/nextjs","@/convex/_generated/dataModel","@/components/chat/ChatArea","@/hooks/useCurrentUser","@/hooks/useOnlineStatus"</imp>
-      <fn n="ChatLayout" p="()" />
-      <fn n="handleSelectConversation" p="(id: Id&lt;&quot;conversations&quot;&gt;)" />
-      <fn n="handleBack" p="()" />
-      <cls n="div" />
-      <cls n="h2" />
-      <cls n="p" />
-    </f>
-    <f p="convex\auth.config.ts" e=".ts" />
-    <f p="convex\conversations.ts" e=".ts">
-      <imp>"convex/values","./_generated/server"</imp>
-    </f>
-    <f p="convex\messages.ts" e=".ts">
-      <imp>"convex/values","./_generated/server"</imp>
-    </f>
-    <f p="convex\readReceipts.ts" e=".ts">
-      <imp>"convex/values","./_generated/server"</imp>
-    </f>
-    <f p="convex\schema.ts" e=".ts">
-      <imp>"convex/server","convex/values"</imp>
-    </f>
-    <f p="convex\typing.ts" e=".ts">
-      <imp>"convex/values","./_generated/server"</imp>
-    </f>
-    <f p="convex\users.ts" e=".ts">
-      <imp>"convex/values","./_generated/server"</imp>
-    </f>
-    <f p="hooks\useCurrentUser.ts" e=".ts">
-      <imp>"@clerk/nextjs","convex/react","react","@/convex/_generated/api"</imp>
-      <fn n="useCurrentUser" p="()" />
-    </f>
-    <f p="hooks\useOnlineStatus.ts" e=".ts">
-      <imp>"convex/react","react","@/convex/_generated/api"</imp>
-      <fn n="useOnlineStatus" p="(clerkId: string | undefined)" />
-      <fn n="handleVisibilityChange" p="()" />
-      <fn n="handleBeforeUnload" p="()" />
-    </f>
-    <f p="lib\providers.tsx" e=".tsx">
-      <imp>"@clerk/nextjs","convex/react","convex/react-clerk","react"</imp>
-      <fn n="Providers" p="({ children }: { children: ReactNode })" />
-      <cls n="ClerkProvider" />
-      <cls n="ConvexProviderWithClerk" />
-    </f>
-    <f p="lib\utils.ts" e=".ts">
-      <imp>"clsx","tailwind-merge","date-fns"</imp>
-      <fn n="cn" p="(...inputs: ClassValue[])" />
-      <fn n="formatMessageTime" p="(timestamp: number)" />
-      <fn n="formatConversationTime" p="(timestamp: number)" />
+    <f p="test2.py" e=".py" />
+    <f p="Ui.py" e=".py">
+      <imp>webbrowser,sys,ctypes,markdown,fitz,render,summarise,os,PyQt6.QtCore,PyQt6,PyQt6.QtWidgets,PyQt6.QtGui,gesture</imp>
+      <cls n="Window">
+        <fn n="__init__" p="(self)" />
+        <fn n="opnpdf" p="(self)" />
+        <fn n="tonxt" p="(self)" />
+        <fn n="toprev" p="(self)" />
+        <fn n="enlarge" p="(self)" />
+        <fn n="minimise" p="(self)" />
+        <fn n="pageScroll" p="(self,value)" />
+        <fn n="summary" p="(self)" />
+        <fn n="close" p="(self)" />
+        <fn n="resource_path" p="(self, relative_path)" />
+        <fn n="toggle2" p="(self)" />
+        <fn n="toggle" p="(self)" />
+        <fn n="resizeEvent" p="(self,event)" />
+        <fn n="checkstate" p="(self)" />
+        <fn n="startGest" p="(self,state)" />
+        <fn n="gestSum" p="(self,enbled:bool)" />
+        <fn n="gestZoom" p="(self,state:int)" />
+        <fn n="eventFilter" p="(self,obj,event)" />
+        <fn n="opnlink" p="(self)" />
+      </cls>
     </f>
   </files>
 </repo>
