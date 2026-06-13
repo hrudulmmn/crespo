@@ -390,8 +390,8 @@ def print_token_stats(
     # reduction bar
     console.print()
     bar_width = 40
-    filled = max(1, int(bar_width * (1 - output_tokens / max(original_tokens, 1))))
-    empty = bar_width - filled
+    remaining = max(1, int(bar_width * (1 - output_tokens / max(original_tokens, 1))))
+    empty = bar_width - remaining
 
     console.print(Align(
         f"  [dim]Original[/dim]  "
@@ -401,7 +401,7 @@ def print_token_stats(
     console.print("\n")
     console.print(Align(
         f"  [dim]Crespo[/dim]  "
-        f"[green]{'█' * empty}[/green][dim]{'░' * filled}[/dim]  "
+        f"[green]{'█' * empty}[/green][dim]{'░' * remaining}[/dim]  "
         f"[green]{output_tokens:,}[/green]",align="center")
     )
     console.print()

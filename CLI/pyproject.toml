@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crespo"
+version = "1.0.3"
+description = "Crisp repos. Sharp AI. Give AI the blueprint, not the code."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    {name = "Hrudul Krishna K V",email = "hrudulkrishna06@gmail.com"}
+]
+requires-python = ">=3.10"
+
+keywords = ["cli", "ai", "llm", "codebase", "ast", "tokenizer", "context-window","reduction","token-saving","developer-tools","context-compression"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "rich>=13.0.0",
+    "tree-sitter>=0.23.0",
+    "tree-sitter-language-pack>=0.0.1",
+    "tiktoken>=0.7.0",
+    "groq>=0.9.0",
+    "gitpython>=3.1.0",
+    "Pillow>=10.0.0",
+    "numpy>=1.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.14.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hrudulmmn/crespo"
+Issues   = "https://github.com/hrudulmmn/crespo/issues"
+
+[project.scripts]
+crespo = "crespo.main:main"
+
+# ── Package discovery ────────────────────────────────────────────────────────
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["crespo*"]
+
+[tool.setuptools.package-data]
+"crespo" = ["cresbee.png", "assets/cresbee.png","*.png"]
+
+# ── Pytest ───────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+testpaths = ["CLI/crespo/tests"]

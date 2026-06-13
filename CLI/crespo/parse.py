@@ -1,8 +1,8 @@
 import tree_sitter_language_pack as lang_pack
-import config
+from . import config
 from pathlib import Path
 from tree_sitter import QueryCursor,Parser
-import security
+from . import security
 
 
 def get_parent(node):

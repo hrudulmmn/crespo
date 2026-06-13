@@ -2,8 +2,8 @@ import xml.etree.ElementTree as ET
 import sys
 import os
 from pathlib import Path
-from summary import Summariser
-import security
+from .summary import Summariser
+from . import security
 
 def is_stdlib(module):
     

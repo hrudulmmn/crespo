@@ -1,6 +1,6 @@
 from groq import Groq
 import os
-import cli
+from . import cli
 
 
 

@@ -3,7 +3,7 @@ import tiktoken
 def tok_count(valid,out):
     if not out:
         print("Error: Output File not Generated")
-        return
+        return 0,0
     counter = tiktoken.get_encoding("o200k_base")
 
     total =0

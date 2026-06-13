@@ -2,17 +2,17 @@ import argparse
 import os
 import sys
 import time
-import walker
-import parse
-import generate
-import counter
-import keystore
-from importlib.resources import files
+from . import walker
+from . import parse
+from . import generate
+from . import counter
+from . import keystore
+from importlib.resources import files as _res_files
 from pathlib import Path
 
 # import ui — handle missing gracefully
 try:
-    import cli
+    from . import cli
     HAS_UI = True
 except ImportError:
     HAS_UI = False
@@ -20,15 +20,10 @@ except ImportError:
 def main():
     # ── find cresbee image ────────────────────────────────────────────────────
     cresbee = None
-    for p in [
-        "cresbee.png",
-        "assets/cresbee.png",
-        str(Path(__file__).parent / "cresbee.png"),
-        str(Path(__file__).parent / "assets" / "cresbee.png"),
-    ]:
-        if Path(p).exists():
-            cresbee = p
-            break
+    try:
+        cresbee = str(_res_files("crespo").joinpath("cresbee.png"))
+    except Exception:
+        cresbee = None
 
     # ── argument parsing ──────────────────────────────────────────────────────
     parser = argparse.ArgumentParser(
@@ -77,7 +72,7 @@ def main():
     args = parser.parse_args()
 
     # ── help ──────────────────────────────────────────────────────────────────
-    if args.help and (args.path is None and args.git is None):
+    if args.help or (args.path is None and args.git is None):
         if HAS_UI:
             cli.print_header(cresbee)
             cli.print_usage()
