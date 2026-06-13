@@ -108,10 +108,17 @@ def extract_struct(file,mode:str,rel_path=None):
         else:
             functions.append(fn)  
 
-    for capture in ["imp","imp_from","imp_source"]:
+    JS_EXTS = {".js", ".jsx", ".ts", ".tsx"}
+
+    if ext in JS_EXTS:
+        source_captures = ["imp_source", "imp_require", "imp_dynamic"]
+    else:
+        source_captures = ["imp", "imp_from"]
+
+    for capture in source_captures:
         for  node in captures.get(capture,[]):
             text=node.text.decode("utf8",errors="ignore")
-            if text not in imports:
+            if text and text not in imports:
                 imports.append(text)
     
     for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:

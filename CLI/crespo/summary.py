@@ -1,6 +1,7 @@
 from groq import Groq
 import os
 from . import cli
+from . import keystore
 
 
 
@@ -34,7 +35,13 @@ class Summariser():
 
         }
     def __init__(self):
-            self.client = Groq(api_key=os.getenv('CRESPO_GROQ_KEY'))
+            key = keystore.get_key()
+            if not key:
+                raise ValueError(
+                    "No Groq API key found. "
+                    "Pass --groq <key> or set CRESPO_GROQ_KEY env var."
+                )
+            self.client = Groq(api_key=key)
             self.systemprompt = """You are an expert senior software engineer and technical writer specializing in code analysis and distillation.
 
                         Your task is to analyze a single file from a codebase and create a highly concise, information-dense summary optimized for LLM consumption.

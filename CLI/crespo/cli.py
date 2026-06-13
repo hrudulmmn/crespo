@@ -22,6 +22,13 @@ console = Console()
 
 # ─── Cresbee pixel art renderer ───────────────────────────────────────────────
 
+def _clickable(path: str) -> Text:
+    path = str(path)
+    uri = Path(path).resolve().as_uri()
+    t = Text(path, style="#8c64dc")
+    t.stylize(f"link {uri}")
+    return t
+
 def _ansi_fg(r, g, b): return f"\033[38;2;{r};{g};{b}m"
 def _ansi_bg(r, g, b): return f"\033[48;2;{r};{g};{b}m"
 RESET = "\033[0m"
@@ -128,6 +135,7 @@ def print_cresbee(image_path: str | None = None, width: int = 34):
 def print_header(image_path: str | None = None):
     """Full startup header with Cresbee + branding."""
     console.print()
+    console.print(Rule(style="#8c64dc"))
 
     # Cresbee on left, branding on right
     cresbee_lines = render_cresbee(image_path or "cresbee.png", width=30)
@@ -145,7 +153,7 @@ def print_header(image_path: str | None = None):
         "\033[38;2;100;200;140m  Crisp repos. Sharp AI.\033[0m",
         "\033[38;2;90;90;120m  Give AI the blueprint, not the code.\033[0m",
         "",
-        "\033[38;2;100;200;140m  v1.0.0\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
+        "\033[38;2;100;200;140m  v1.0.6\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
     ]
 
     # print side by side
@@ -212,7 +220,7 @@ def print_scan_start(source: str, mode: str):
     }
     color = mode_colors.get(mode, "green")
     console.print(
-        f"  [dim]Source[/dim]  [white]{source}[/white]"
+        f"  [dim]Source[/dim]  [white]{Path(source).resolve()}[/white]"
     )
     console.print(
         f"  [dim]Mode[/dim]    [{color}]{mode}[/{color}]"
@@ -291,7 +299,7 @@ def run_with_progress(files: list[dict], label: str = "Parsing") -> None:
 
 def run_summary_progress(files: list[dict]) -> None:
     """Show Groq API call progress for summary mode."""
-    
+    print_rule()
     console.print("  [purple]Calling Groq API...[/purple]")
     console.print()
 
@@ -326,7 +334,6 @@ def print_security_result(secrets_found: int, files_scanned: int):
             f"  [yellow]⚠[/yellow]  [yellow]Security scan — "
             f"{secrets_found} secret(s) redacted[/yellow]"
         )
-    console.print(Rule(style="#8c64dc"))
 
 
 # ─── Stats ────────────────────────────────────────────────────────────────────
@@ -378,7 +385,7 @@ def print_token_stats(
     table.add_row("", "")
     table.add_row(
         "Output File",
-        f"[#8c64dc]{output_file}[/#8c64dc]"
+        _clickable(output_file)
     )
     table.add_row(
         "Time Elapsed",
@@ -407,11 +414,10 @@ def print_token_stats(
     console.print()
 
     # done
-    console.print(Align(
-        f"[green]Blueprint saved →[/green] "
-        f"[#8c64dc]{output_file}[/#8c64dc]","center")
-    )
-    console.print()
+    saved = Text()
+    saved.append("Blueprint saved → ", style="green")
+    saved.append_text(_clickable(output_file))
+    console.print(Align(saved,align="center"))
     console.print(Rule(style="#8c64dc"))
 
 
@@ -425,9 +431,10 @@ def print_warning(message: str):
     console.print(f"  [yellow]⚠[/yellow]  [yellow]{message}[/yellow]")
 
 def print_loc(output_file):
-    console.print(Align(
-        f"[green]Blueprint saved →[/green] "
-        f"[#8c64dc]{output_file}[/#8c64dc]","center"))
+    saved = Text()
+    saved.append("Blueprint saved → ", style="green")
+    saved.append_text(_clickable(output_file))
+    console.print(Align(saved, "center"))
     console.print(Rule(style="#8c64dc"))
 
 
@@ -479,6 +486,7 @@ def summary_progress_context(total_files: int):
                 summaries = summariser.summarise_files_batch(chunk)
                 advance(len(chunk))
     """
+    print_rule()
     console.print("  [purple]Calling Groq API...[/purple]")
     console.print()
 
@@ -502,3 +510,6 @@ def summary_progress_context(total_files: int):
         yield advance   # caller runs here; progress bar stays alive
 
     console.print(f"  [purple]✓[/purple]  [dim]Summaries generated[/dim]")
+
+def print_rule():
+    console.print(Rule(style="#8c64cd"))

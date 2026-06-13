@@ -12,6 +12,20 @@ def is_stdlib(module):
 def _out_path(filename):
     return  Path(os.getcwd())/filename
 
+def _clean_import(im: str) -> str:
+    im = im.strip().strip("'\"")
+    if not im:
+        return ""
+    # relative path → use stem
+    if im.startswith("."):
+        return Path(im).stem
+    # scoped package → keep as-is e.g. @clerk/clerk-react → clerk-react
+    if im.startswith("@"):
+        parts = im.lstrip("@").split("/")
+        return parts[1] if len(parts) > 1 else parts[0]
+    # normal package → first segment e.g. react-dom/client → react-dom
+    return im.split("/")[0]   
+
 def gen_struct(extracted,reponame):
     root = ET.Element("repo",{"n":str(reponame)})
     meta = ET.SubElement(root,"meta")
@@ -29,7 +43,7 @@ def gen_struct(extracted,reponame):
         if file.get('Fallback'):
             continue
         for dep in file["imports"]:
-            module = dep.split(".")[0]
+            module = _clean_import(dep)
             if not is_stdlib(module) and module not in pathstem and module not in imports:
                 imports.append(module)
     
@@ -44,7 +58,12 @@ def gen_struct(extracted,reponame):
 
         if file["imports"]:
                 imp = ET.SubElement(f,"imp")
-                imp.text = ",".join(file["imports"])
+                mod =[]
+                for im in file["imports"]:
+                    clean = _clean_import(im)
+                    if clean and clean not in mod:
+                        mod.append(im)
+                imp.text = ",".join(mod)
 
         if file["functions"]:
             for func in file["functions"]:
@@ -89,8 +108,8 @@ def gen_summ(extracted, reponame):
         if file.get('Fallback'):
             continue
         for dep in file["imports"]:
-            module = dep.split(".")[0]
-            if not is_stdlib(module) and module not in pathstem and module not in imports:
+            module = _clean_import(dep)
+            if module and not is_stdlib(module) and module not in pathstem and module not in imports:
                 imports.append(module)
 
     deps.text = ",".join(imports)
@@ -107,7 +126,7 @@ def gen_summ(extracted, reponame):
         files_data.append({
             "path":      file["file_name"],
             "lang":      file["ext"],
-            "imports":   file["imports"],
+            "imports":   [c for im in file["imports"] if (c := _clean_import(im))],
             "classes":   file["classes"],
             "functions": file["functions"],
         })
@@ -116,9 +135,8 @@ def gen_summ(extracted, reponame):
     # ── batched summarisation with live spinner ───────────────────────────
     BATCH_SIZE = 20
     all_summaries = []
-
     try:
-        import cli
+        from . import cli
         with cli.summary_progress_context(len(files_data)) as advance:
             for i in range(0, len(files_data), BATCH_SIZE):
                 chunk = files_data[i : i + BATCH_SIZE]
@@ -128,6 +146,7 @@ def gen_summ(extracted, reponame):
                     len(chunk),
                     label=f"batch {i // BATCH_SIZE + 1} / {((len(files_data) - 1) // BATCH_SIZE) + 1}"
                 )
+
     except ImportError:
         # no UI — run silently
         for i in range(0, len(files_data), BATCH_SIZE):
@@ -148,8 +167,9 @@ def gen_summ(extracted, reponame):
         if file["imports"]:
             imp = ET.SubElement(f, "imp")
             for im in file["imports"]:
-                if im.split('.')[0] not in mod:
-                    mod.append(im.split('.')[0])
+                clean = _clean_import(im)
+                if clean and clean not in mod:
+                    mod.append(clean)
             imp.text = ",".join(mod)
 
         if file["functions"]:
@@ -169,10 +189,10 @@ def gen_summ(extracted, reponame):
                     })
 
         if file["struct"]:
-            ET.SubElement(f, "struct", {"n": file["struct"]})
+            ET.SubElement(f, "struct", {"n": ",".join(file["struct"])})
 
         if file["enum"]:
-            ET.SubElement(f, "enum", {"n": file["enum"]})
+            ET.SubElement(f, "enum", {"n": ",".join(file["enum"])})
 
     out = _out_path("summary.xml")
     tree = ET.ElementTree(root)

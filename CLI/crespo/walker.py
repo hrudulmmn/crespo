@@ -3,6 +3,14 @@ from pathlib import Path
 import fnmatch
 from . import config
 
+HAS_UI = False 
+
+try:
+    from . import cli
+    HAS_UI = True
+except ImportError:
+    HAS_UI = False
+
 IGNORE_FOLDERS = {
     ".git", ".github",
     ".venv", "venv",
@@ -112,10 +120,13 @@ def walk_dir(path: str, respect_gitignore: bool = True):
         if respect_gitignore else []
     )
 
-    print(f"\n Walking: {path}\n")
+    if HAS_UI:
+        print(f"\n Walking: {cli._clickable(str(base_path))}\n")
+    else:
+        print(f"\n Walking: {str(base_path)}\n")
     valid_files = []
 
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(base_path):
         rel_root = str(
             Path(root).resolve().relative_to(base_path)
         )

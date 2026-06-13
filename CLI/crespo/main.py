@@ -72,7 +72,7 @@ def main():
     args = parser.parse_args()
 
     # ── help ──────────────────────────────────────────────────────────────────
-    if args.help or (args.path is None and args.git is None):
+    if args.help:
         if HAS_UI:
             cli.print_header(cresbee)
             cli.print_usage()
@@ -85,16 +85,28 @@ def main():
 
         if args.groq == saved_key:
             if HAS_UI:
+                cli.print_rule()
                 cli.print_info("✓ This key is already saved.")
+                cli.print_rule()
             else:
                 print("✓ This key is already saved.")
         else:
             keystore.get_key(provided=args.groq)  # saves + injects into env
             if HAS_UI:
+                cli.print_rule()
                 cli.print_info("✓ Groq key saved.")
+                cli.print_rule()
             else:
                 print("✓ Groq key saved.")
         sys.exit(0)
+
+    if args.path is None and args.git is None:
+        if HAS_UI:
+            cli.print_header(cresbee)
+            cli.print_usage()
+        else:
+            parser.print_help()
+    sys.exit(0)
         
 
     if HAS_UI:
@@ -115,6 +127,7 @@ def main():
             git.Repo.clone_from(args.git, temp_dir, depth=1, single_branch=True)
             if HAS_UI:
                 cli.print_info("Clone successful\n")
+                cli.print_rule()
             path = temp_dir
             reponame = args.git.rstrip("/").split("/")[-1].replace(".git", "")
             cloned = True
@@ -140,7 +153,7 @@ def main():
     if HAS_UI:
         cli.print_scan_start(args.git or path, mode)
     else:
-        print(f"\nRepo: {reponame}  |  Mode: {mode}\nScanning...")
+        print(f"\nRepo: {Path(reponame).resolve()}  |  Mode: {mode}\nScanning...")
 
     valid_files = walker.walk_dir(path=path)
 
