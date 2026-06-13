@@ -62,7 +62,7 @@ def gen_struct(extracted,reponame):
                 for im in file["imports"]:
                     clean = _clean_import(im)
                     if clean and clean not in mod:
-                        mod.append(im)
+                        mod.append(clean)
                 imp.text = ",".join(mod)
 
         if file["functions"]:
