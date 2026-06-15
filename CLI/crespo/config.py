@@ -51,6 +51,13 @@ def get_config():
                     module_name: (dotted_name) @imp_from
                     (wildcard_import) @imp_wildcard)
 
+                (import_from_statement
+                    module_name: (relative_import) @imp_from)
+
+                (import_from_statement
+                    module_name: (relative_import) @imp_from
+                    (wildcard_import) @imp_wildcard)
+
                 (class_definition
                     name: (identifier) @class_name)
 
@@ -95,6 +102,7 @@ def get_config():
 
                 (call_expression
                     function: (identifier) @_callee
+                    (#eq? @_callee "require")
                     arguments: (arguments (string) @imp_require))
 
                 (call_expression
@@ -147,6 +155,7 @@ def get_config():
 
                 (call_expression
                     function: (identifier) @_callee
+                    (#eq? @_callee "require")
                     arguments: (arguments (string) @imp_require))
 
                 (call_expression
@@ -201,6 +210,7 @@ def get_config():
 
                 (call_expression
                     function: (identifier) @_callee
+                    (#eq? @_callee "require")
                     arguments: (arguments (string) @imp_require))
 
                 (call_expression
@@ -224,6 +234,9 @@ def get_config():
                 (jsx_element
                     open_tag: (jsx_opening_element
                         name: (identifier) @jsx_component))
+
+                (jsx_self_closing_element
+                    name: (identifier) @jsx_component)
 
                 (lexical_declaration
                     (variable_declarator
@@ -282,8 +295,15 @@ def get_config():
                     path: (interpreted_string_literal) @imp)
 
                 (import_spec
+                    path: (raw_string_literal) @imp)
+
+                (import_spec
                     name: (identifier) @imp_alias
                     path: (interpreted_string_literal) @imp)
+
+                (import_spec
+                    name: (identifier) @imp_alias
+                    path: (raw_string_literal) @imp)
 
                 (type_declaration
                     (type_spec
@@ -414,8 +434,22 @@ def get_config():
         },
     }
 
-    LANGUAGE_CONFIGS[".jsx"] = LANGUAGE_CONFIGS[".js"]
-    LANGUAGE_CONFIGS[".h"]   = LANGUAGE_CONFIGS[".c"]
-    LANGUAGE_CONFIGS[".hpp"] = LANGUAGE_CONFIGS[".cpp"]
+    # .jsx gets its own entry — same as .js but with JSX component captures added
+    LANGUAGE_CONFIGS[".jsx"] = {
+        "parser": lang_pack.get_parser("javascript"),
+        "lang_obj": lang_pack.get_language("javascript"),
+        "query": LANGUAGE_CONFIGS[".js"]["query"] + """
+                (jsx_element
+                    open_tag: (jsx_opening_element
+                        name: (identifier) @jsx_component))
+
+                (jsx_self_closing_element
+                    name: (identifier) @jsx_component)
+        """
+    }
+
+    # Safe copies — avoids shared-dict mutation bugs
+    LANGUAGE_CONFIGS[".h"]   = dict(LANGUAGE_CONFIGS[".c"])
+    LANGUAGE_CONFIGS[".hpp"] = dict(LANGUAGE_CONFIGS[".cpp"])
 
     return LANGUAGE_CONFIGS

@@ -153,7 +153,7 @@ def print_header(image_path: str | None = None):
         "\033[38;2;100;200;140m  Crisp repos. Sharp AI.\033[0m",
         "\033[38;2;90;90;120m  Give AI the blueprint, not the code.\033[0m",
         "",
-        "\033[38;2;100;200;140m  v1.0.7\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
+        "\033[38;2;100;200;140m  v1.0.9\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
     ]
 
     # print side by side
@@ -513,3 +513,25 @@ def summary_progress_context(total_files: int):
 
 def print_rule():
     console.print(Rule(style="#8c64cd"))
+
+@contextmanager
+def parse_progress_context(total_files: int):
+    with Progress(
+        SpinnerColumn(style="green"),
+        TextColumn("  [green]{task.description}[/green]"),
+        BarColumn(bar_width=30, style="green", complete_style="bright_green"),
+        TaskProgressColumn(),
+        TextColumn("[dim]{task.fields[filename]}[/dim]"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Parsing", total=total_files, filename="")
+
+        def advance(filename: str = ""):
+            progress.update(task, advance=1, filename=filename)
+
+        yield advance
+
+    print_rule()
+    console.print(f"  [green]✓[/green]  [dim]Parsed {total_files} files[/dim]")
+    print_rule()

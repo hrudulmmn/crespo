@@ -106,7 +106,7 @@ def main():
             cli.print_usage()
         else:
             parser.print_help()
-    sys.exit(0)
+        sys.exit(0)
         
 
     if HAS_UI:
@@ -157,6 +157,13 @@ def main():
 
     valid_files = walker.walk_dir(path=path)
 
+    if not valid_files:
+        if HAS_UI:
+            cli.print_error(f"No Valid files found in path")
+        else:
+            print(f"No valid files found in path")
+        sys.exit(1)
+
     if HAS_UI:
         cli.print_tree_classic([f["relpath"] for f in valid_files], root=reponame)
     else:
@@ -164,19 +171,26 @@ def main():
             print(f"  ✓  {file['relpath']}")
 
     # ── parse ─────────────────────────────────────────────────────────────────
-    if HAS_UI:
-        cli.run_with_progress(valid_files, label="Parsing files")
-    else:
-        print(f"\nParsing {len(valid_files)} files...")
 
     extracted = []
-    for file in valid_files:
-        signature = parse.extract_struct(
-            Path(file["abspath"]).resolve(),
-            mode,
-            file["relpath"]
-        )
-        extracted.append(signature)
+    if HAS_UI:
+        with cli.parse_progress_context(len(valid_files)) as advance:
+            for file in valid_files:
+                signature = parse.extract_struct(
+                    Path(file["abspath"]).resolve(),
+                    mode,
+                    file["relpath"]
+                )
+                extracted.append(signature)
+                advance(Path(file["relpath"]).name)
+    else:
+        print(f"\nParsing {len(valid_files)} files...")
+        for file in valid_files:
+            extracted.append(parse.extract_struct(
+                Path(file["abspath"]).resolve(),
+                mode,
+                file["relpath"]
+            ))
 
     # ── groq key for summarize ────────────────────────────────────────────────
     if mode == "summarize":

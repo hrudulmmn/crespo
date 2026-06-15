@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crespo"
-version = "1.0.7"
+version = "1.0.9"
 description = "Crisp repos. Sharp AI. Give AI the blueprint, not the code."
 readme = "README.md"
 license = { text = "MIT" }
@@ -16,7 +16,7 @@ requires-python = ">=3.10"
 keywords = ["cli", "ai", "llm", "codebase", "ast", "tokenizer", "context-window","reduction","token-saving","developer-tools","context-compression"]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",

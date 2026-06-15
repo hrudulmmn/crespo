@@ -121,12 +121,17 @@ def extract_struct(file,mode:str,rel_path=None):
             if text and text not in imports:
                 imports.append(text)
     
-    for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
+    for capture in ["class_name","interface_name","impl_for","type_name"]:
         for node in captures.get(capture,[]):
             text = node.text.decode("utf8",errors="ignore")
             if text not in classes:
                 classes[text]=[]
-    
+
+    for node in captures.get("jsx_component",[]):
+        text = node.text.decode("utf8",errors="ignore")
+        if text and text[0].isupper() and text not in classes:
+            classes[text] = []
+                
     for node in captures.get("struct_name",[]):
         text = node.text.decode("utf8",errors="ignore")
         if text not in struct:
