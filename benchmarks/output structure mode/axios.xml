@@ -1,0 +1,507 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="axios">
+  <meta>
+    <dep>js,globals,gulp,axios-build-instance,minimist,fs-extra,plugin-node-resolve,plugin-commonjs,plugin-terser,plugin-babel,plugin-json,rollup-plugin-bundle-size,plugin-alias,path,module,package,http2,util,events,proxy-from-env,https,follow-redirects,stream,https-proxy-agent,form-data,crypto,url,fs</dep>
+  </meta>
+  <files>
+    <f p="eslint.config.js" e=".js">
+      <imp>js,globals</imp>
+    </f>
+    <f p="gulpfile.js" e=".js">
+      <imp>gulp,axios-build-instance,minimist,fs-extra</imp>
+      <fn n="getContributors" p="(user, repo, maxCount = 1)" />
+    </f>
+    <f p="index.d.ts" e=".ts">
+      <cls n="AxiosHeaders" />
+      <cls n="AxiosError" />
+      <cls n="Axios" />
+      <cls n="CanceledError" />
+      <cls n="AxiosResponseTransformer" />
+      <cls n="TransitionalOptions" />
+      <cls n="SerializerVisitor" />
+      <cls n="LookupAddressEntry" />
+      <cls n="GenericFormData" />
+      <cls n="AxiosStatic" />
+      <cls n="CancelStatic" />
+      <cls n="FormDataVisitorHelpers" />
+      <cls n="AxiosRequestConfig" />
+      <cls n="CancelTokenStatic" />
+      <cls n="GenericHTMLFormElement" />
+      <cls n="RawAxiosHeaders" />
+      <cls n="SerializerOptions" />
+      <cls n="InternalAxiosRequestConfig" />
+      <cls n="AxiosDefaults" />
+      <cls n="CreateAxiosDefaults" />
+      <cls n="Cancel" />
+      <cls n="FormSerializerOptions" />
+      <cls n="AxiosProxyConfig" />
+      <cls n="AxiosRequestTransformer" />
+      <cls n="AxiosBasicCredentials" />
+      <cls n="Canceler" />
+      <cls n="CancelToken" />
+      <cls n="AxiosInterceptorOptions" />
+      <cls n="AxiosInstance" />
+      <cls n="AxiosProgressEvent" />
+      <cls n="ParamsSerializerOptions" />
+      <cls n="ParamEncoder" />
+      <cls n="GenericAbortSignal" />
+      <cls n="HeadersDefaults" />
+      <cls n="CancelTokenSource" />
+      <cls n="AxiosInterceptorHandler" />
+      <cls n="AxiosInterceptorManager" />
+      <cls n="CustomParamsSerializer" />
+      <cls n="AxiosResponse" />
+      <cls n="AxiosAdapter" />
+    </f>
+    <f p="index.js" e=".js">
+      <imp>axios</imp>
+    </f>
+    <f p="rollup.config.js" e=".js">
+      <imp>plugin-node-resolve,plugin-commonjs,plugin-terser,plugin-babel,plugin-json,rollup-plugin-bundle-size,plugin-alias,path,module,package</imp>
+      <fn n="buildConfig" p="({ es5, browser = true, minifiedVersion = true, alias, ...config })" />
+      <fn n="build" p="({ minified })" />
+      <fn n="nodeCjsExternal" p="(id)" />
+    </f>
+    <f p="webpack.config.js" e=".js">
+      <fn n="generateConfig" p="(name)" />
+    </f>
+    <f p="lib\axios.js" e=".js">
+      <imp>HttpStatusCode,adapters,AxiosHeaders,utils,bind,index,mergeConfig,Axios,formDataToJSON,CanceledError,CancelToken,isCancel,data,AxiosError,spread,toFormData,isAxiosError</imp>
+      <fn n="createInstance" p="(defaultConfig)" />
+    </f>
+    <f p="lib\utils.js" e=".js">
+      <imp>bind</imp>
+      <fn n="hasOwnInPrototypeChain" p="(thing, prop)" />
+      <fn n="getSafeProp" p="(obj, prop)" />
+      <fn n="kindOfTest" p="(type)" />
+      <fn n="typeOfTest" p="(type)" />
+      <fn n="isBuffer" p="(val)" />
+      <fn n="isArrayBufferView" p="(val)" />
+      <fn n="isObject" p="(thing)" />
+      <fn n="isBoolean" p="(thing)" />
+      <fn n="isPlainObject" p="(val)" />
+      <fn n="isEmptyObject" p="(val)" />
+      <fn n="isReactNativeBlob" p="(value)" />
+      <fn n="isReactNative" p="(formData)" />
+      <fn n="isStream" p="(val)" />
+      <fn n="getGlobal" p="()" />
+      <fn n="isFormData" p="(thing)" />
+      <fn n="trim" p="(str)" />
+      <fn n="forEach" p="(obj, fn, { allOwnKeys = false } = {})" />
+      <fn n="findKey" p="(obj, key)" />
+      <fn n="isContextDefined" p="(context)" />
+      <fn n="merge" p="(...objs)" />
+      <fn n="assignValue" p="(val, key)" />
+      <fn n="extend" p="(a, b, thisArg, { allOwnKeys } = {})" />
+      <fn n="stripBOM" p="(content)" />
+      <fn n="inherits" p="(constructor, superConstructor, props, descriptors)" />
+      <fn n="toFlatObject" p="(sourceObj, destObj, filter, propFilter)" />
+      <fn n="endsWith" p="(str, searchString, position)" />
+      <fn n="toArray" p="(thing)" />
+      <fn n="forEachEntry" p="(obj, fn)" />
+      <fn n="matchAll" p="(regExp, str)" />
+      <fn n="toCamelCase" p="(str)" />
+      <fn n="reduceDescriptors" p="(obj, reducer)" />
+      <fn n="freezeMethods" p="(obj)" />
+      <fn n="toObjectSet" p="(arrayOrString, delimiter)" />
+      <fn n="define" p="(arr)" />
+      <fn n="noop" p="()" />
+      <fn n="toFiniteNumber" p="(value, defaultValue)" />
+      <fn n="isSpecCompliantForm" p="(thing)" />
+      <fn n="toJSONObject" p="(obj)" />
+      <fn n="visit" p="(source)" />
+      <fn n="isThenable" p="(thing)" />
+      <fn n="isIterable" p="(thing)" />
+      <fn n="isSafeIterable" p="(thing)" />
+    </f>
+    <f p="lib\adapters\adapters.js" e=".js">
+      <imp>utils,AxiosError,xhr,fetch,http</imp>
+      <fn n="renderReason" p="(reason)" />
+      <fn n="isResolvedHandle" p="(adapter)" />
+      <fn n="getAdapter" p="(adapters, config)" />
+    </f>
+    <f p="lib\adapters\fetch.js" e=".js">
+      <imp>index,trackStream,utils,AxiosError,composeSignals,AxiosHeaders,progressEventReducer,resolveConfig,settle,estimateDataURLDecodedBytes,data,sanitizeHeaderValue</imp>
+      <fn n="encodeUTF8" p="(str)" />
+      <fn n="decodeURIComponentSafe" p="(value)" />
+      <fn n="test" p="(fn, ...args)" />
+      <fn n="maybeWithAuthCredentials" p="(url)" />
+      <fn n="factory" p="(env)" />
+      <fn n="duplex" p="()" />
+      <fn n="getBodyLength" p="(body)" />
+      <fn n="resolveBodyLength" p="(headers, body)" />
+      <fn n="own" p="(key)" />
+      <fn n="maxBodyLengthError" p="()" />
+      <fn n="trackRequestStream" p="(stream, onProgress, flush)" />
+      <fn n="onChunkProgress" p="(loadedBytes)" />
+      <fn n="getFetch" p="(config)" />
+    </f>
+    <f p="lib\adapters\http.js" e=".js">
+      <imp>AxiosError,buildFullPath,http2,util,index,zlib,ZlibHeaderTransformStream,sanitizeHeaderValue,path,CanceledError,events,readBlob,callbackify,estimateDataURLDecodedBytes,proxy-from-env,https,transitional,fromDataURI,follow-redirects,stream,AxiosHeaders,formDataToStream,Http2Sessions,shouldBypassProxy,utils,buildURL,settle,https-proxy-agent,http,data,AxiosTransformStream,progressEventReducer</imp>
+      <fn n="setFormDataHeaders" p="(headers, formHeaders, policy)" />
+      <fn n="getTunnelingAgent" p="(agentOptions, userHttpsAgent)" />
+      <fn n="decodeURIComponentSafe" p="(value)" />
+      <fn n="flushOnFinish" p="(stream, [throttled, flush])" />
+      <fn n="dispatchBeforeRedirect" p="(options, responseDetails, requestDetails)" />
+      <fn n="stripMatchingHeaders" p="(headers, sensitiveSet)" />
+      <fn n="isSameOriginRedirect" p="(redirectOptions, requestDetails)" />
+      <fn n="setProxy" p="(options, configProxy, location, isRedirect, configHttpsAgent)" />
+      <fn n="readProxyField" p="(key)" />
+      <fn n="wrapAsync" p="(asyncExecutor)" />
+      <fn n="done" p="(value, isRejected)" />
+      <fn n="_resolve" p="(value)" />
+      <fn n="_reject" p="(reason)" />
+      <fn n="resolveFamily" p="({ address, family })" />
+      <fn n="buildAddressEntry" p="(address, family)" />
+      <fn n="request" p="(options, cb)" />
+      <fn n="own" p="(key)" />
+      <fn n="abort" p="(reason)" />
+      <fn n="clearConnectPhaseTimer" p="()" />
+      <fn n="createTimeoutError" p="()" />
+      <fn n="onFinished" p="()" />
+      <fn n="transform" p="(chunk, _enc, cb)" />
+    </f>
+    <f p="lib\adapters\xhr.js" e=".js">
+      <imp>utils,CanceledError,AxiosError,transitional,settle,parseProtocol,index,AxiosHeaders,progressEventReducer,resolveConfig,sanitizeHeaderValue</imp>
+      <fn n="done" p="()" />
+      <fn n="onloadend" p="()" />
+    </f>
+    <f p="lib\cancel\CanceledError.js" e=".js">
+      <imp>AxiosError</imp>
+      <cls n="CanceledError">
+        <fn n="constructor" p="(message, config, request)" />
+      </cls>
+    </f>
+    <f p="lib\cancel\CancelToken.js" e=".js">
+      <imp>CanceledError</imp>
+      <cls n="CancelToken">
+        <fn n="constructor" p="(executor)" />
+        <fn n="throwIfRequested" p="()" />
+        <fn n="subscribe" p="(listener)" />
+        <fn n="unsubscribe" p="(listener)" />
+        <fn n="toAbortSignal" p="()" />
+        <fn n="abort" p="(err)" />
+        <fn n="source" p="()" />
+      </cls>
+    </f>
+    <f p="lib\cancel\isCancel.js" e=".js">
+      <fn n="isCancel" p="(value)" />
+    </f>
+    <f p="lib\core\Axios.js" e=".js">
+      <imp>utils,buildURL,mergeConfig,InterceptorManager,dispatchRequest,buildFullPath,validator,AxiosHeaders,transitional</imp>
+      <fn n="generateHTTPMethod" p="(isForm)" />
+      <cls n="Axios">
+        <fn n="constructor" p="(instanceConfig)" />
+        <fn n="request" p="(configOrUrl, config)" />
+        <fn n="_request" p="(configOrUrl, config)" />
+        <fn n="getUri" p="(config)" />
+      </cls>
+    </f>
+    <f p="lib\core\AxiosError.js" e=".js">
+      <imp>utils,AxiosHeaders</imp>
+      <fn n="hasOwnOrPrototypeToJSON" p="(source)" />
+      <fn n="redactConfig" p="(config, redactKeys)" />
+      <fn n="visit" p="(source)" />
+      <cls n="AxiosError">
+        <fn n="from" p="(error, code, config, request, response, customProps)" />
+        <fn n="constructor" p="(message, code, config, request, response)" />
+        <fn n="toJSON" p="()" />
+      </cls>
+    </f>
+    <f p="lib\core\AxiosHeaders.js" e=".js">
+      <imp>utils,parseHeaders,sanitizeHeaderValue</imp>
+      <fn n="normalizeHeader" p="(header)" />
+      <fn n="normalizeValue" p="(value)" />
+      <fn n="parseTokens" p="(str)" />
+      <fn n="isValidHeaderName" p="(str)" />
+      <fn n="matchHeaderValue" p="(context, value, header, filter, isHeaderNameFilter)" />
+      <fn n="formatHeader" p="(header)" />
+      <fn n="buildAccessors" p="(obj, header)" />
+      <fn n="set" p="(headerValue)" />
+      <cls n="AxiosHeaders">
+        <fn n="constructor" p="(headers)" />
+        <fn n="set" p="(header, valueOrRewrite, rewrite)" />
+        <fn n="setHeader" p="(_value, _header, _rewrite)" />
+        <fn n="setHeaders" p="(headers, _rewrite)" />
+        <fn n="get" p="(header, parser)" />
+        <fn n="has" p="(header, matcher)" />
+        <fn n="delete" p="(header, matcher)" />
+        <fn n="deleteHeader" p="(_header)" />
+        <fn n="clear" p="(matcher)" />
+        <fn n="normalize" p="(format)" />
+        <fn n="concat" p="(...targets)" />
+        <fn n="toJSON" p="(asStrings)" />
+        <fn n="toString" p="()" />
+        <fn n="getSetCookie" p="()" />
+        <fn n="from" p="(thing)" />
+        <fn n="concat" p="(first, ...targets)" />
+        <fn n="accessor" p="(header)" />
+        <fn n="defineAccessor" p="(_header)" />
+      </cls>
+    </f>
+    <f p="lib\core\buildFullPath.js" e=".js">
+      <imp>AxiosError,combineURLs,isAbsoluteURL</imp>
+      <fn n="stripLeadingC0ControlOrSpace" p="(url)" />
+      <fn n="normalizeURLForProtocolCheck" p="(url)" />
+      <fn n="assertValidHttpProtocolURL" p="(url, config)" />
+      <fn n="buildFullPath" p="(baseURL, requestedURL, allowAbsoluteUrls, config)" />
+    </f>
+    <f p="lib\core\dispatchRequest.js" e=".js">
+      <imp>transformData,index,CanceledError,isCancel,AxiosHeaders,adapters</imp>
+      <fn n="throwIfCancellationRequested" p="(config)" />
+      <fn n="dispatchRequest" p="(config)" />
+    </f>
+    <f p="lib\core\InterceptorManager.js" e=".js">
+      <imp>utils</imp>
+      <cls n="InterceptorManager">
+        <fn n="constructor" p="()" />
+        <fn n="use" p="(fulfilled, rejected, options)" />
+        <fn n="eject" p="(id)" />
+        <fn n="clear" p="()" />
+        <fn n="forEach" p="(fn)" />
+      </cls>
+    </f>
+    <f p="lib\core\mergeConfig.js" e=".js">
+      <imp>utils,AxiosHeaders</imp>
+      <fn n="headersToObject" p="(thing)" />
+      <fn n="mergeConfig" p="(config1, config2)" />
+      <fn n="getMergedValue" p="(target, source, prop, caseless)" />
+      <fn n="mergeDeepProperties" p="(a, b, prop, caseless)" />
+      <fn n="valueFromConfig2" p="(a, b)" />
+      <fn n="defaultToConfig2" p="(a, b)" />
+      <fn n="getMergedTransitionalOption" p="(prop)" />
+      <fn n="mergeDirectKeys" p="(a, b, prop)" />
+    </f>
+    <f p="lib\core\settle.js" e=".js">
+      <imp>AxiosError</imp>
+      <fn n="settle" p="(resolve, reject, response)" />
+    </f>
+    <f p="lib\core\transformData.js" e=".js">
+      <imp>utils,AxiosHeaders,index</imp>
+      <fn n="transformData" p="(fns, response)" />
+    </f>
+    <f p="lib\defaults\index.js" e=".js">
+      <imp>utils,transitional,toURLEncodedForm,toFormData,AxiosError,index,formDataToJSON</imp>
+      <fn n="own" p="(obj, key)" />
+      <fn n="stringifySafely" p="(rawValue, parser, encoder)" />
+    </f>
+    <f p="lib\defaults\transitional.js" e=".js" />
+    <f p="lib\env\data.js" e=".js" />
+    <f p="lib\env\classes\FormData.js" e=".js">
+      <imp>form-data</imp>
+    </f>
+    <f p="lib\helpers\AxiosTransformStream.js" e=".js">
+      <imp>stream,utils</imp>
+      <cls n="AxiosTransformStream">
+        <fn n="constructor" p="(options)" />
+        <fn n="_read" p="(size)" />
+        <fn n="_transform" p="(chunk, encoding, callback)" />
+        <fn n="pushChunk" p="(_chunk, _callback)" />
+        <fn n="transformChunk" p="(_chunk, _callback)" />
+      </cls>
+    </f>
+    <f p="lib\helpers\AxiosURLSearchParams.js" e=".js">
+      <imp>toFormData</imp>
+      <fn n="encode" p="(str)" />
+      <fn n="AxiosURLSearchParams" p="(params, options)" />
+    </f>
+    <f p="lib\helpers\bind.js" e=".js">
+      <fn n="bind" p="(fn, thisArg)" />
+    </f>
+    <f p="lib\helpers\buildURL.js" e=".js">
+      <imp>utils,AxiosURLSearchParams</imp>
+      <fn n="encode" p="(val)" />
+      <fn n="buildURL" p="(url, params, options)" />
+    </f>
+    <f p="lib\helpers\callbackify.js" e=".js">
+      <imp>utils</imp>
+      <fn n="callbackify" p="(fn, reducer)" />
+    </f>
+    <f p="lib\helpers\combineURLs.js" e=".js">
+      <fn n="combineURLs" p="(baseURL, relativeURL)" />
+    </f>
+    <f p="lib\helpers\composeSignals.js" e=".js">
+      <imp>CanceledError,utils,AxiosError</imp>
+      <fn n="composeSignals" p="(signals, timeout)" />
+      <fn n="unsubscribe" p="()" />
+    </f>
+    <f p="lib\helpers\cookies.js" e=".js">
+      <imp>utils,index</imp>
+      <fn n="write" p="(name, value, expires, path, domain, secure, sameSite)" />
+      <fn n="read" p="(name)" />
+      <fn n="remove" p="(name)" />
+      <fn n="write" p="()" />
+      <fn n="read" p="()" />
+      <fn n="remove" p="()" />
+    </f>
+    <f p="lib\helpers\deprecatedMethod.js" e=".js">
+      <fn n="deprecatedMethod" p="(method, instead, docs)" />
+    </f>
+    <f p="lib\helpers\estimateDataURLDecodedBytes.js" e=".js">
+      <fn n="isHexDigit" p="(charCode)" />
+      <fn n="isPercentEncodedByte" p="(str, i, len)" />
+      <fn n="estimateDataURLDecodedBytes" p="(url)" />
+      <fn n="tailIsPct3D" p="(j)" />
+    </f>
+    <f p="lib\helpers\formDataToJSON.js" e=".js">
+      <imp>utils,toFormData,AxiosError</imp>
+      <fn n="throwIfDepthExceeded" p="(index)" />
+      <fn n="parsePropPath" p="(name)" />
+      <fn n="arrayToObject" p="(arr)" />
+      <fn n="formDataToJSON" p="(formData)" />
+      <fn n="buildPath" p="(path, value, target, index)" />
+    </f>
+    <f p="lib\helpers\formDataToStream.js" e=".js">
+      <imp>util,readBlob,index,utils,stream</imp>
+      <fn n="formDataToStream" p="(form, headersHandler, options)" />
+      <cls n="FormDataPart">
+        <fn n="constructor" p="(name, value)" />
+        <fn n="encode" p="()" />
+        <fn n="escapeName" p="(name)" />
+      </cls>
+    </f>
+    <f p="lib\helpers\fromDataURI.js" e=".js">
+      <imp>AxiosError,index,parseProtocol</imp>
+      <fn n="fromDataURI" p="(uri, asBlob, options)" />
+    </f>
+    <f p="lib\helpers\Http2Sessions.js" e=".js">
+      <imp>http2,util</imp>
+      <cls n="Http2Sessions">
+        <fn n="constructor" p="()" />
+        <fn n="getSession" p="(authority, options)" />
+        <fn n="removeSession" p="()" />
+      </cls>
+    </f>
+    <f p="lib\helpers\HttpStatusCode.js" e=".js" />
+    <f p="lib\helpers\isAbsoluteURL.js" e=".js">
+      <fn n="isAbsoluteURL" p="(url)" />
+    </f>
+    <f p="lib\helpers\isAxiosError.js" e=".js">
+      <imp>utils</imp>
+      <fn n="isAxiosError" p="(payload)" />
+    </f>
+    <f p="lib\helpers\isURLSameOrigin.js" e=".js">
+      <imp>index</imp>
+    </f>
+    <f p="lib\helpers\null.js" e=".js" />
+    <f p="lib\helpers\parseHeaders.js" e=".js">
+      <imp>utils</imp>
+    </f>
+    <f p="lib\helpers\parseProtocol.js" e=".js">
+      <fn n="parseProtocol" p="(url)" />
+    </f>
+    <f p="lib\helpers\progressEventReducer.js" e=".js">
+      <imp>speedometer,utils,throttle</imp>
+      <fn n="progressEventReducer" p="(listener, isDownloadStream, freq = 3)" />
+      <fn n="progressEventDecorator" p="(total, throttled)" />
+      <fn n="asyncDecorator" p="(fn)" />
+    </f>
+    <f p="lib\helpers\readBlob.js" e=".js" />
+    <f p="lib\helpers\resolveConfig.js" e=".js">
+      <imp>index,buildFullPath,utils,cookies,isURLSameOrigin,mergeConfig,AxiosHeaders,buildURL</imp>
+      <fn n="setFormDataHeaders" p="(headers, formHeaders, policy)" />
+      <fn n="encodeUTF8" p="(str)" />
+      <fn n="resolveConfig" p="(config)" />
+      <fn n="own" p="(key)" />
+    </f>
+    <f p="lib\helpers\sanitizeHeaderValue.js" e=".js">
+      <imp>utils</imp>
+      <fn n="trimSPorHTAB" p="(str)" />
+      <fn n="sanitizeValue" p="(value, invalidChars)" />
+      <fn n="sanitizeHeaderValue" p="(value)" />
+      <fn n="sanitizeByteStringHeaderValue" p="(value)" />
+      <fn n="toByteStringHeaderObject" p="(headers)" />
+    </f>
+    <f p="lib\helpers\shouldBypassProxy.js" e=".js">
+      <fn n="isIPv4Loopback" p="(host)" />
+      <fn n="isIPv6ZeroGroup" p="(group)" />
+      <fn n="isIPv6Unspecified" p="(host)" />
+      <fn n="isIPv6Loopback" p="(host)" />
+      <fn n="isLoopback" p="(host)" />
+      <fn n="parseNoProxyEntry" p="(entry)" />
+      <fn n="unmapIPv4MappedIPv6" p="(host)" />
+      <fn n="normalizeNoProxyHost" p="(hostname)" />
+      <fn n="shouldBypassProxy" p="(location)" />
+    </f>
+    <f p="lib\helpers\speedometer.js" e=".js">
+      <fn n="speedometer" p="(samplesCount, min)" />
+    </f>
+    <f p="lib\helpers\spread.js" e=".js">
+      <fn n="spread" p="(callback)" />
+    </f>
+    <f p="lib\helpers\throttle.js" e=".js">
+      <fn n="throttle" p="(fn, freq)" />
+      <fn n="invoke" p="(args, now = Date.now())" />
+      <fn n="throttled" p="(...args)" />
+      <fn n="flush" p="()" />
+    </f>
+    <f p="lib\helpers\toFormData.js" e=".js">
+      <imp>utils,AxiosError,FormData</imp>
+      <fn n="isVisitable" p="(thing)" />
+      <fn n="removeBrackets" p="(key)" />
+      <fn n="renderKey" p="(path, key, dots)" />
+      <fn n="isFlatArray" p="(arr)" />
+      <fn n="toFormData" p="(obj, formData, options)" />
+      <fn n="convertValue" p="(value)" />
+      <fn n="throwIfMaxDepthExceeded" p="(depth)" />
+      <fn n="stringifyWithDepthLimit" p="(value, depth)" />
+      <fn n="defaultVisitor" p="(value, key, path)" />
+      <fn n="build" p="(value, path, depth = 0)" />
+    </f>
+    <f p="lib\helpers\toURLEncodedForm.js" e=".js">
+      <imp>utils,toFormData,index</imp>
+      <fn n="toURLEncodedForm" p="(data, options)" />
+    </f>
+    <f p="lib\helpers\trackStream.js" e=".js">
+      <fn n="trackStream" p="(stream, chunkSize, onProgress, onFinish)" />
+      <fn n="_onFinish" p="(e)" />
+      <fn n="pull" p="(controller)" />
+      <fn n="cancel" p="(reason)" />
+    </f>
+    <f p="lib\helpers\validator.js" e=".js">
+      <imp>data,AxiosError</imp>
+      <fn n="formatMessage" p="(opt, desc)" />
+      <fn n="assertOptions" p="(options, schema, allowUnknown)" />
+    </f>
+    <f p="lib\helpers\ZlibHeaderTransformStream.js" e=".js">
+      <imp>stream</imp>
+      <cls n="ZlibHeaderTransformStream">
+        <fn n="__transform" p="(chunk, encoding, callback)" />
+        <fn n="_transform" p="(chunk, encoding, callback)" />
+      </cls>
+    </f>
+    <f p="lib\platform\index.js" e=".js">
+      <imp>index,utils</imp>
+    </f>
+    <f p="lib\platform\browser\index.js" e=".js">
+      <imp>URLSearchParams,Blob,FormData</imp>
+    </f>
+    <f p="lib\platform\browser\classes\Blob.js" e=".js" />
+    <f p="lib\platform\browser\classes\FormData.js" e=".js" />
+    <f p="lib\platform\browser\classes\URLSearchParams.js" e=".js">
+      <imp>AxiosURLSearchParams</imp>
+    </f>
+    <f p="lib\platform\common\utils.js" e=".js" />
+    <f p="lib\platform\node\index.js" e=".js">
+      <imp>crypto,FormData,URLSearchParams</imp>
+      <fn n="generateString" p="(size = 16, alphabet = ALPHABET.ALPHA_DIGIT)" />
+    </f>
+    <f p="lib\platform\node\classes\FormData.js" e=".js">
+      <imp>form-data</imp>
+    </f>
+    <f p="lib\platform\node\classes\URLSearchParams.js" e=".js">
+      <imp>url</imp>
+    </f>
+    <f p="sandbox\client.js" e=".js">
+      <imp>index</imp>
+      <fn n="handleSuccess" p="(data)" />
+      <fn n="handleFailure" p="(data)" />
+    </f>
+    <f p="sandbox\server.js" e=".js">
+      <imp>fs,path,http</imp>
+      <fn n="pipeFileToResponse" p="(res, file, type)" />
+      <fn n="handleApiRequest" p="(req, res)" />
+      <fn n="requestHandler" p="(req, res)" />
+    </f>
+  </files>
+</repo>

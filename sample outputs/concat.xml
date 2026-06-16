@@ -1,0 +1,2429 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="CLI">
+  <file n="cli.py">
+    <src>
+		
+		
+		import sys
+		import os
+		import time
+		from pathlib import Path
+		
+		from rich.console import Console
+		from rich.panel import Panel
+		from rich.table import Table
+		from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+		from rich.text import Text
+		from rich.columns import Columns
+		from rich.rule import Rule
+		from rich.align import Align
+		from rich import print as rprint
+		from rich.tree import Tree
+		from rich import box
+		from contextlib import contextmanager
+		
+		console = Console()
+		
+		# ─── Cresbee pixel art renderer ───────────────────────────────────────────────
+		
+		def _ansi_fg(r, g, b): return f"\033[38;2;{r};{g};{b}m"
+		def _ansi_bg(r, g, b): return f"\033[48;2;{r};{g};{b}m"
+		RESET = "\033[0m"
+		
+		
+		def render_cresbee(image_path: str, width: int = 38) -&gt; list[str]:
+		    """
+		    Render Cresbee PNG as half-block (▀) terminal art.
+		    Uses NEAREST resampling for sharp pixel-art edges.
+		    Alpha threshold 80 keeps only solid pixels — no blurry anti-alias halo.
+		    Returns a list of ANSI strings, one per terminal row.
+		    Falls back to ASCII art on any error.
+		    """
+		    try:
+		        from PIL import Image
+		        import numpy as np
+		 
+		        img = Image.open(image_path).convert("RGBA")
+		        arr = np.array(img).copy()
+		 
+		        # ── strip near-black background ──────────────────────────────────────
+		        r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+		        bg = (r &lt; 22) &amp; (g &lt; 22) &amp; (b &lt; 22)
+		        arr[bg, 3] = 0
+		 
+		        clean = Image.fromarray(arr, "RGBA")
+		        bbox  = clean.getbbox()
+		        if not bbox:
+		            return _fallback_cresbee()
+		 
+		        cropped = clean.crop(bbox)
+		 
+		        # ── resize with NEAREST for hard pixel-art edges ─────────────────────
+		        aspect    = cropped.height / cropped.width
+		        px_height = int(width * aspect)
+		        # must be even for ▀/▄ pairing
+		        if px_height % 2:
+		            px_height += 1
+		 
+		        resized = cropped.resize((width, px_height), Image.NEAREST)
+		        px      = np.array(resized)
+		 
+		        ALPHA_THRESH = 80   # pixels below this alpha → transparent
+		 
+		        lines = []
+		        for y in range(0, px_height, 2):
+		            row = ""
+		            for x in range(width):
+		                top = px[y,     x]
+		                bot = px[y + 1, x] if (y + 1) &lt; px_height else (0, 0, 0, 0)
+		 
+		                t_on = int(top[3]) &gt;= ALPHA_THRESH
+		                b_on = int(bot[3]) &gt;= ALPHA_THRESH
+		 
+		                if t_on and b_on:
+		                    tr, tg, tb = int(top[0]), int(top[1]), int(top[2])
+		                    br, bg_c, bb = int(bot[0]), int(bot[1]), int(bot[2])
+		                    row += (
+		                        _ansi_fg(tr, tg, tb)
+		                        + _ansi_bg(br, bg_c, bb)
+		                        + "▀"
+		                        + RESET
+		                    )
+		                elif t_on:
+		                    tr, tg, tb = int(top[0]), int(top[1]), int(top[2])
+		                    row += _ansi_fg(tr, tg, tb) + "▀" + RESET
+		                elif b_on:
+		                    br, bg_c, bb = int(bot[0]), int(bot[1]), int(bot[2])
+		                    row += _ansi_fg(br, bg_c, bb) + "▄" + RESET
+		                else:
+		                    row += " "
+		            lines.append(row)
+		 
+		        return lines
+		 
+		    except Exception:
+		        return _fallback_cresbee()
+		
+		
+		def _fallback_cresbee() -&gt; list[str]:
+		    """ASCII fallback when PIL unavailable or image missing."""
+		    return [
+		        "  \033[38;2;130;110;200m╭──╮ ╭──╮\033[0m",
+		        " \033[38;2;100;200;140m╭╯\033[0m\033[38;2;130;110;200m  ╰─╯  \033[0m\033[38;2;100;200;140m╰╮\033[0m",
+		        " \033[38;2;100;200;140m│\033[0m  \033[1;37m◉\033[0m    \033[1;37m◉\033[0m  \033[38;2;100;200;140m│\033[0m",
+		        " \033[38;2;100;200;140m│\033[0m    \033[38;2;130;110;200m──\033[0m    \033[38;2;100;200;140m│\033[0m",
+		        " \033[38;2;100;200;140m╰──┬\033[0m\033[38;2;255;200;50m████\033[0m\033[38;2;100;200;140m┬──╯\033[0m",
+		        "    \033[38;2;100;200;140m│\033[0m\033[38;2;255;200;50m 🍯 \033[0m\033[38;2;100;200;140m│\033[0m",
+		        "    \033[38;2;100;200;140m╰────╯\033[0m",
+		    ]
+		
+		
+		def print_cresbee(image_path: str | None = None, width: int = 34):
+		    """Print Cresbee to terminal."""
+		    path = image_path or "cresbee.png"
+		    lines = render_cresbee(path, width=width)
+		    for line in lines:
+		        print(line)
+		    print("\033[0m", end="")
+		
+		
+		# ─── Header ───────────────────────────────────────────────────────────────────
+		
+		def print_header(image_path: str | None = None):
+		    """Full startup header with Cresbee + branding."""
+		    console.print()
+		
+		    # Cresbee on left, branding on right
+		    cresbee_lines = render_cresbee(image_path or "cresbee.png", width=30)
+		
+		    # build branding text
+		    brand_lines = [
+		        "",
+		        "\033[1;38;2;100;200;140m  ██████╗██████╗ ███████╗███████╗██████╗  ██████╗ \033[0m",
+		        "\033[38;2;100;200;140m ██╔════╝ ██╔══██╗██╔════╝██╔════╝██╔══██╗██╔═══██╗\033[0m",
+		        "\033[38;2;110;180;160m ██║      ██████╔╝█████╗  ███████╗██████╔╝██║   ██║\033[0m",
+		        "\033[38;2;120;160;180m ██║      ██╔══██╗██╔══╝  ╚════██║██╔═══╝ ██║   ██║\033[0m",
+		        "\033[38;2;130;110;200m ╚██████╗ ██║  ██║███████╗███████║██║     ╚██████╔╝\033[0m",
+		        "\033[38;2;140;100;220m  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝ \033[0m",
+		        "",
+		        "\033[38;2;100;200;140m  Crisp repos. Sharp AI.\033[0m",
+		        "\033[38;2;90;90;120m  Give AI the blueprint, not the code.\033[0m",
+		        "",
+		        "\033[38;2;100;200;140m  v1.0.0\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
+		    ]
+		
+		    # print side by side
+		    max_lines = max(len(cresbee_lines), len(brand_lines))
+		
+		    for i in range(max_lines):
+		        left = cresbee_lines[i] if i &lt; len(cresbee_lines) else ""
+		        right = brand_lines[i] if i &lt; len(brand_lines) else ""
+		        # pad left column to fixed width (accounting for ANSI codes)
+		        visible_len = len(left.encode("utf-8").decode("utf-8"))
+		        # rough padding — cresbee art is ~30 chars wide
+		        print(f"  {left}   {right}")
+		
+		    print("\033[0m")
+		
+		    # separator
+		    console.print(
+		        Rule(style="#8c64dc"),
+		    )
+		
+		
+		def print_usage():
+		    """Print usage panel."""
+		    console.print(
+		        Panel(
+		            Text.from_markup(
+		                "[bold green]Usage[/bold green]\n"
+		                "  [cyan]crespo[/cyan] [purple]&lt;path|url&gt;[/purple] "
+		                "[[green]--mode[/green] structure|summary|concat] "
+		                "[[green]--output[/green] file.xml]\n\n"
+		                "[bold green]Examples[/bold green]\n"
+		                "  [green]crespo[/green] ./myproject\n"
+		                "  [green]crespo[/green] ./myproject [green]--mode[/green] summary\n"
+		                "  [green]crespo[/green] [green]--git[/green] https://github.com/user/repo\n"
+		                "  [green]crespo[/green] ./myproject [green]--mode[/green] concat "
+		                "[green]--output[/green] full.xml\n\n"
+		                "[bold green]Modes[/bold green]\n"
+		                "  [green]structure[/green] :\tAST skeleton only — ~84% token reduction  "
+		                "[dim](default)[/dim]\n"
+		                "  [purple]summary[/purple] :\tstructure + AI function descriptions via Groq\n"
+		                "  [cyan]concat[/cyan] :\tfull source + secrets redacted + structure header\n\n"
+		                "[bold green]Options[/bold green]\n"
+		                "  [green]--mode[/green]      structure | summary | concat\n"
+		                "  [green]--output[/green]    Output filename  [dim](default: blueprint.xml)[/dim]\n"
+		                "  [green]--groq[/green]      Groq API key for summary mode [dim]or set CRESPO_GROQ_KEY env var[/dim]\n"
+		                "  [green]--git[/green]       Using git URL.\n"
+		                "  [green]--help[/green]      Show this message"
+		            ),
+		            title="[bold green]Crespo[/bold green]",
+		            border_style="green",
+		            padding=(1, 2),
+		        )
+		    )
+		
+		
+		# ─── Scan phase ───────────────────────────────────────────────────────────────
+		
+		def print_scan_start(source: str, mode: str):
+		    """Print scan start info."""
+		    mode_colors = {
+		        "structure": "green",
+		        "summary": "purple",
+		        "concat": "cyan",
+		    }
+		    color = mode_colors.get(mode, "green")
+		    console.print(
+		        f"  [dim]Source[/dim]  [white]{source}[/white]"
+		    )
+		    console.print(
+		        f"  [dim]Mode[/dim]    [{color}]{mode}[/{color}]"
+		    )
+		    console.print(Rule(title="[green][b]DETAILS[/b][/green]",style="#8c64dc"))
+		
+		
+		LANG_COLORS = {
+		    "py": "blue", "js": "yellow", "ts": "cyan",
+		    "jsx": "yellow", "tsx": "cyan", "rs": "red",
+		    "go": "cyan", "java": "red", "c": "green", "cpp": "green",
+		}
+		
+		def _lang_badge(lang: str) -&gt; str:
+		    color = LANG_COLORS.get(lang, "white")
+		    return f"[{color}]{lang}[/{color}]"
+		
+		def _ext(relpath: str) -&gt; str:
+		    return Path(relpath).suffix.lstrip(".")
+		
+		
+		# ── Style 1: Classic Rich Tree (├── branches) ─────────────────────────────────
+		
+		def print_tree_classic(found: list[str],root:str = "project"):
+		    """Builds a Rich Tree with ├── / └── branch lines."""
+		    tree = Tree(f"[bold green]{root}[/bold green]")
+		    nodes: dict[str, Tree] = {}
+		
+		    def get_dir_node(parts: tuple) -&gt; Tree:
+		        if not parts:
+		            return tree
+		        if parts in nodes:
+		            return nodes[parts]
+		        parent = get_dir_node(parts[:-1])
+		        node = parent.add(f"[#8c64dc][b]{parts[-1]}[b][/#8c64dc]")
+		        nodes[parts] = node
+		        return node
+		
+		    for relpath in sorted(found):
+		        p = Path(relpath)
+		        lang = _ext(relpath)
+		        parent = get_dir_node(p.parts[:-1])
+		        parent.add(f"{p.name}  {_lang_badge(lang)}")
+		
+		    console.print(Panel(tree,box=box.SIMPLE,border_style="dim"))
+		
+		
+		# ─── Parse phase ──────────────────────────────────────────────────────────────
+		
+		def run_with_progress(files: list[dict], label: str = "Parsing") -&gt; None:
+		    """Show progress bar while parsing files."""
+		    with Progress(
+		        SpinnerColumn(style="green"),
+		        TextColumn("  [green]{task.description}[/green]"),
+		        BarColumn(bar_width=30, style="green", complete_style="bright_green"),
+		        TaskProgressColumn(),
+		        TextColumn("[dim]{task.fields[filename]}[/dim]"),
+		        console=console,
+		        transient=True,
+		    ) as progress:
+		        task = progress.add_task(
+		            label,
+		            total=len(files),
+		            filename=""
+		        )
+		        for file in files:
+		            name = Path(file.get("relpath", "")).name
+		            progress.update(task, advance=1, filename=name)
+		            time.sleep(0.1)  # remove this in real implementation
+		
+		    console.print()
+		    console.print(Rule(style="#8c64dc"))
+		    console.print(f"  [green]✓[/green]  [dim]Parsed {len(files)} files[/dim]")
+		    console.print(Rule(style="#8c64dc"))
+		
+		
+		def run_summary_progress(files: list[dict]) -&gt; None:
+		    """Show Groq API call progress for summary mode."""
+		    
+		    console.print("  [purple]Calling Groq API...[/purple]")
+		    console.print()
+		
+		    with Progress(
+		        SpinnerColumn(style="purple"),
+		        TextColumn("  [purple]{task.description}[/purple]"),
+		        BarColumn(bar_width=25, style="purple", complete_style="bright_magenta"),
+		        TaskProgressColumn(),
+		        console=console,
+		        transient=True,
+		    ) as progress:
+		        task = progress.add_task("Summarising", total=len(files))
+		        for file in files:
+		            name = Path(file.get("relpath", "")).name
+		            progress.update(task, description=f"summarising {name}", advance=1)
+		            time.sleep(0.08)
+		
+		    console.print(f"  [purple]✓[/purple]  [dim]Summaries generated[/dim]")
+		
+		
+		# ─── Security phase ───────────────────────────────────────────────────────────
+		
+		def print_security_result(secrets_found: int, files_scanned: int):
+		    """Print security scan result."""
+		    if secrets_found == 0:
+		        console.print(
+		            f"  [green]✓[/green]  [dim]Security scan — {files_scanned} files — "
+		            f"no secrets detected[/dim]"
+		        )
+		    else:
+		        console.print(
+		            f"  [yellow]⚠[/yellow]  [yellow]Security scan — "
+		            f"{secrets_found} secret(s) redacted[/yellow]"
+		        )
+		    console.print(Rule(style="#8c64dc"))
+		
+		
+		# ─── Stats ────────────────────────────────────────────────────────────────────
+		
+		def print_token_stats(
+		    original_tokens: int,
+		    output_tokens: int,
+		    mode: str,
+		    output_file: str,
+		    elapsed: float,
+		    extra_stats: dict | None = None,
+		):
+		    """Print final token statistics table."""
+		    reduction = round((1 - output_tokens / max(original_tokens, 1)) * 100)
+		
+		    console.print(Rule(title="[green][b]ANALYSIS[/b][/green]",style="#8c64dc"))
+		    console.print()
+		
+		    # stats table
+		    table = Table(
+		        box=box.ROUNDED,
+		        padding=(0, 2),
+		        border_style="green",
+		    )
+		    table.add_column("Metric", style="dim", width=20)
+		    table.add_column("Value", justify="right")
+		
+		    table.add_row(
+		        "Original Tokens",
+		        f"[red]{original_tokens:,}[/red]"
+		    )
+		    table.add_row(
+		        "Crespo Output",
+		        f"[green]{output_tokens:,}[/green]"
+		    )
+		    table.add_row(
+		        "Token Reduction",
+		        f"[bold purple]{reduction}%[/bold purple]"
+		    )
+		    table.add_row(
+		        "Mode",
+		        f"[cyan]{mode}[/cyan]"
+		    )
+		
+		    if extra_stats:
+		        for k, v in extra_stats.items():
+		            table.add_row(k, str(v))
+		
+		    table.add_row("", "")
+		    table.add_row(
+		        "Output File",
+		        f"[#8c64dc]{output_file}[/#8c64dc]"
+		    )
+		    table.add_row(
+		        "Time Elapsed",
+		        f"[dim]{elapsed:.1f}s[/dim]"
+		    )
+		
+		    console.print(Align(table, align="center", pad=True))
+		
+		    # reduction bar
+		    console.print()
+		    bar_width = 40
+		    filled = max(1, int(bar_width * (1 - output_tokens / max(original_tokens, 1))))
+		    empty = bar_width - filled
+		
+		    console.print(Align(
+		        f"  [dim]Original[/dim]  "
+		        f"[red]{'█' * bar_width}[/red]  "
+		        f"[cyan]{original_tokens:,}[/cyan]",align="center")
+		    )
+		    console.print("\n")
+		    console.print(Align(
+		        f"  [dim]Crespo[/dim]  "
+		        f"[green]{'█' * empty}[/green][dim]{'░' * filled}[/dim]  "
+		        f"[green]{output_tokens:,}[/green]",align="center")
+		    )
+		    console.print()
+		
+		    # done
+		    console.print(Align(
+		        f"[green]Blueprint saved →[/green] "
+		        f"[#8c64dc]{output_file}[/#8c64dc]","center")
+		    )
+		    console.print()
+		    console.print(Rule(style="#8c64dc"))
+		
+		
+		# ─── Error / warning helpers ──────────────────────────────────────────────────
+		
+		def print_error(message: str):
+		    console.print(f"\n  [red]✗[/red]  [red]{message}[/red]\n")
+		
+		
+		def print_warning(message: str):
+		    console.print(f"  [yellow]⚠[/yellow]  [yellow]{message}[/yellow]")
+		
+		def print_loc(output_file):
+		    console.print(Align(
+		        f"[green]Blueprint saved →[/green] "
+		        f"[#8c64dc]{output_file}[/#8c64dc]","center"))
+		    console.print(Rule(style="#8c64dc"))
+		
+		
+		def print_info(message: str):
+		    console.print(Align(f"  [dim]{message}[/dim]","center"))
+		
+		
+		def print_groq_fallback():
+		    """Warn when Groq rate limit hit and falling back to structure."""
+		    console.print()
+		    console.print(
+		        Panel(
+		            "[yellow]Groq rate limit reached.[/yellow]\n"
+		            "Remaining files will use [green]structure mode[/green] "
+		            "(no summaries).\n"
+		            "[dim]Files already summarised are preserved.[/dim]",
+		            border_style="yellow",
+		            padding=(0, 2),
+		        )
+		    )
+		    console.print()
+		
+		
+		def print_no_groq_key():
+		    """Warn when no Groq key and falling back."""
+		    console.print()
+		    console.print(
+		        Panel(
+		            "[yellow]No Groq API key found.[/yellow]\n"
+		            "Falling back to [green]structure mode[/green].\n\n"
+		            "[dim]To use summary mode:[/dim]\n"
+		            "  [green]export CRESPO_GROQ_KEY=your_key_here[/green]\n"
+		            "  [dim]Get a free key at[/dim] [cyan]https://console.groq.com[/cyan]",
+		            border_style="yellow",
+		            padding=(0, 2),
+		        )
+		    )
+		    console.print()
+		
+		@contextmanager  
+		def summary_progress_context(total_files: int):
+		    """
+		    Context manager that keeps the Groq spinner alive until the caller exits.
+		    Yields an `advance(n)` callable so batch completions can tick the bar.
+		    
+		    Usage:
+		        with cli.summary_progress_context(len(files)) as advance:
+		            for chunk in batches:
+		                summaries = summariser.summarise_files_batch(chunk)
+		                advance(len(chunk))
+		    """
+		    console.print("  [purple]Calling Groq API...[/purple]")
+		    console.print()
+		
+		    with Progress(
+		        SpinnerColumn(style="purple"),
+		        TextColumn("  [purple]{task.description}[/purple]"),
+		        TaskProgressColumn(),
+		        TextColumn("[dim]{task.fields[current]}[/dim]"),
+		        console=console,
+		        transient=True,
+		    ) as progress:
+		        task = progress.add_task(
+		            "Summarising",
+		            total=total_files,
+		            current=""
+		        )
+		
+		        def advance(n: int, label: str = ""):
+		            progress.update(task, advance=n, current=label)
+		
+		        yield advance   # caller runs here; progress bar stays alive
+		
+		    console.print(f"  [purple]✓[/purple]  [dim]Summaries generated[/dim]")
+	</src>
+  </file>
+  <file n="config.py">
+    <src>
+		import tree_sitter_language_pack as lang_pack
+		
+		# ─────────────────────────────────────────────────────────────────────────────
+		# All queries verified against official tree-sitter grammar node-types.json
+		# sources on GitHub. Rules applied:
+		#
+		# 1. Only use field: labels that actually exist in the grammar for that node.
+		#    e.g. import_from_statement has fields "module_name" and "name" (for
+		#    dotted_name/aliased_import children) but wildcard_import is an unnamed
+		#    CHILD, not a named field — so it must be matched without a field label.
+		#
+		# 2. Nested field constraints are valid (tree-sitter supports them) but the
+		#    field name must exist on the INNER node type too. When uncertain, drop
+		#    the field label and match by node type only — tree-sitter still finds it.
+		#
+		# 3. No (#eq?) predicates — not supported in all tree-sitter-python versions.
+		#
+		# 4. (import) is a valid primary_expression node in JS/TS for dynamic import.
+		# ─────────────────────────────────────────────────────────────────────────────
+		
+		def get_config():
+		    LANGUAGE_CONFIGS = {
+		
+		        # ── Python ──────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-python
+		        #
+		        # import_statement        fields: name → dotted_name | aliased_import
+		        # import_from_statement   fields: module_name → dotted_name | relative_import
+		        #                                 name → dotted_name | aliased_import
+		        #                         child (unnamed field): wildcard_import
+		        # aliased_import          fields: name → dotted_name
+		        #                                 alias → identifier
+		        # function_definition     fields: name, parameters, body, return_type
+		        # class_definition        fields: name, superclasses, body
+		        ".py": {
+		            "parser": lang_pack.get_parser("python"),
+		            "lang_obj": lang_pack.get_language("python"),
+		            "query": """
+		                (import_statement
+		                    name: (dotted_name) @imp)
+		
+		                (aliased_import
+		                    name: (dotted_name) @imp
+		                    alias: (identifier) @imp_alias)
+		
+		                (import_from_statement
+		                    module_name: (dotted_name) @imp_from
+		                    name: (dotted_name) @imp_symbol)
+		
+		                (import_from_statement
+		                    module_name: (dotted_name) @imp_from
+		                    (wildcard_import) @imp_wildcard)
+		
+		                (class_definition
+		                    name: (identifier) @class_name)
+		
+		                (function_definition
+		                    name: (identifier) @func_name
+		                    parameters: (parameters) @func_params)
+		            """
+		        },
+		
+		        # ── JavaScript ──────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-javascript
+		        #
+		        # import_statement        fields: source → string
+		        #                         child: import_clause
+		        # import_clause           child: identifier (default), namespace_import,
+		        #                                named_imports
+		        # namespace_import        child: identifier
+		        # named_imports           child: import_specifier
+		        # import_specifier        fields: name → identifier
+		        #                                 alias → identifier  (for "a as b")
+		        # call_expression         fields: function → expression, arguments → arguments
+		        # (import) is a named node (primary_expression subtype) for dynamic import()
+		        ".js": {
+		            "parser": lang_pack.get_parser("javascript"),
+		            "lang_obj": lang_pack.get_language("javascript"),
+		            "query": """
+		                (import_statement
+		                    source: (string) @imp_source)
+		
+		                (import_clause
+		                    (identifier) @imp_default)
+		
+		                (namespace_import
+		                    (identifier) @imp_namespace)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol
+		                    alias: (identifier) @imp_alias)
+		
+		                (call_expression
+		                    function: (identifier) @_callee
+		                    arguments: (arguments (string) @imp_require))
+		
+		                (call_expression
+		                    function: (import)
+		                    arguments: (arguments (string) @imp_dynamic))
+		
+		                (class_declaration
+		                    name: (identifier) @class_name)
+		
+		                (function_declaration
+		                    name: (identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (method_definition
+		                    name: (property_identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (lexical_declaration
+		                    (variable_declarator
+		                        name: (identifier) @func_name
+		                        value: (arrow_function
+		                            parameters: (formal_parameters) @func_params)))
+		            """
+		        },
+		
+		        # ── TypeScript ──────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-typescript
+		        # Same import structure as JS. `import type { Foo }` uses the same
+		        # import_specifier node — the "type" keyword is an unnamed child.
+		        # class/interface use type_identifier instead of identifier for names.
+		        ".ts": {
+		            "parser": lang_pack.get_parser("typescript"),
+		            "lang_obj": lang_pack.get_language("typescript"),
+		            "query": """
+		                (import_statement
+		                    source: (string) @imp_source)
+		
+		                (import_clause
+		                    (identifier) @imp_default)
+		
+		                (namespace_import
+		                    (identifier) @imp_namespace)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol
+		                    alias: (identifier) @imp_alias)
+		
+		                (call_expression
+		                    function: (identifier) @_callee
+		                    arguments: (arguments (string) @imp_require))
+		
+		                (call_expression
+		                    function: (import)
+		                    arguments: (arguments (string) @imp_dynamic))
+		
+		                (class_declaration
+		                    name: (type_identifier) @class_name)
+		
+		                (interface_declaration
+		                    name: (type_identifier) @interface_name)
+		
+		                (function_declaration
+		                    name: (identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (method_definition
+		                    name: (property_identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (lexical_declaration
+		                    (variable_declarator
+		                        name: (identifier) @func_name
+		                        value: (arrow_function
+		                            parameters: (formal_parameters) @func_params)))
+		            """
+		        },
+		
+		        # ── TSX ─────────────────────────────────────────────────────────────────
+		        # Same as TS with jsx_element added.
+		        # jsx_element → open_tag field → jsx_opening_element
+		        # jsx_opening_element → name field → identifier | member_expression
+		        ".tsx": {
+		            "parser": lang_pack.get_parser("tsx"),
+		            "lang_obj": lang_pack.get_language("tsx"),
+		            "query": """
+		                (import_statement
+		                    source: (string) @imp_source)
+		
+		                (import_clause
+		                    (identifier) @imp_default)
+		
+		                (namespace_import
+		                    (identifier) @imp_namespace)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol)
+		
+		                (import_specifier
+		                    name: (identifier) @imp_symbol
+		                    alias: (identifier) @imp_alias)
+		
+		                (call_expression
+		                    function: (identifier) @_callee
+		                    arguments: (arguments (string) @imp_require))
+		
+		                (call_expression
+		                    function: (import)
+		                    arguments: (arguments (string) @imp_dynamic))
+		
+		                (class_declaration
+		                    name: (type_identifier) @class_name)
+		
+		                (interface_declaration
+		                    name: (type_identifier) @interface_name)
+		
+		                (function_declaration
+		                    name: (identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (method_definition
+		                    name: (property_identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		
+		                (jsx_element
+		                    open_tag: (jsx_opening_element
+		                        name: (identifier) @jsx_component))
+		
+		                (lexical_declaration
+		                    (variable_declarator
+		                        name: (identifier) @func_name
+		                        value: (arrow_function
+		                            parameters: (formal_parameters) @func_params)))
+		            """
+		        },
+		
+		        # ── Java ────────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-java
+		        #
+		        # import_declaration  children (no named fields): scoped_identifier,
+		        #                      asterisk; the "static" keyword is an anonymous
+		        #                      child — no named field for it.
+		        # class_declaration   fields: name → identifier
+		        # interface_declaration fields: name → identifier
+		        # method_declaration  fields: name → identifier, parameters → formal_parameters
+		        ".java": {
+		            "parser": lang_pack.get_parser("java"),
+		            "lang_obj": lang_pack.get_language("java"),
+		            "query": """
+		                (import_declaration
+		                    (scoped_identifier) @imp)
+		
+		                (import_declaration
+		                    (asterisk) @imp_wildcard)
+		
+		                (class_declaration
+		                    name: (identifier) @class_name)
+		
+		                (interface_declaration
+		                    name: (identifier) @interface_name)
+		
+		                (method_declaration
+		                    name: (identifier) @func_name
+		                    parameters: (formal_parameters) @func_params)
+		            """
+		        },
+		
+		        # ── Go ──────────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-go
+		        #
+		        # import_spec   fields: name → identifier (optional alias, ".", or "_")
+		        #                        path → interpreted_string_literal
+		        # type_spec     fields: name → type_identifier
+		        # function_declaration  fields: name → identifier, parameters → parameter_list
+		        # method_declaration    fields: receiver → parameter_list,
+		        #                                name → field_identifier,
+		        #                                parameters → parameter_list
+		        ".go": {
+		            "parser": lang_pack.get_parser("go"),
+		            "lang_obj": lang_pack.get_language("go"),
+		            "query": """
+		                (import_spec
+		                    path: (interpreted_string_literal) @imp)
+		
+		                (import_spec
+		                    name: (identifier) @imp_alias
+		                    path: (interpreted_string_literal) @imp)
+		
+		                (type_declaration
+		                    (type_spec
+		                        name: (type_identifier) @type_name))
+		
+		                (function_declaration
+		                    name: (identifier) @func_name
+		                    parameters: (parameter_list) @func_params)
+		
+		                (method_declaration
+		                    receiver: (parameter_list) @receiver
+		                    name: (field_identifier) @func_name
+		                    parameters: (parameter_list) @func_params)
+		            """
+		        },
+		
+		        # ── Rust ────────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-rust
+		        #
+		        # use_declaration   field: argument → scoped_identifier | scoped_use_list
+		        #                          | use_wildcard | use_as_clause | identifier
+		        # use_as_clause     fields: path → scoped_identifier | identifier
+		        #                           alias → identifier
+		        # use_list          unnamed children: identifier, use_as_clause, etc.
+		        # struct_item       fields: name → type_identifier
+		        # enum_item         fields: name → type_identifier
+		        # impl_item         fields: type → type_identifier | ...
+		        # function_item     fields: name → identifier, parameters → parameters
+		        ".rs": {
+		            "parser": lang_pack.get_parser("rust"),
+		            "lang_obj": lang_pack.get_language("rust"),
+		            "query": """
+		                (use_declaration
+		                    argument: (scoped_identifier) @imp)
+		
+		                (use_declaration
+		                    argument: (scoped_use_list) @imp_grouped)
+		
+		                (use_declaration
+		                    argument: (use_wildcard) @imp_glob)
+		
+		                (use_as_clause
+		                    path: (scoped_identifier) @imp
+		                    alias: (identifier) @imp_alias)
+		
+		                (use_list
+		                    (identifier) @imp_symbol)
+		
+		                (struct_item
+		                    name: (type_identifier) @struct_name)
+		
+		                (enum_item
+		                    name: (type_identifier) @enum_name)
+		
+		                (impl_item
+		                    type: (type_identifier) @impl_for)
+		
+		                (function_item
+		                    name: (identifier) @func_name
+		                    parameters: (parameters) @func_params)
+		            """
+		        },
+		
+		        # ── C ───────────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-c
+		        #
+		        # preproc_include  fields: path → string_literal | system_lib_string
+		        # struct_specifier fields: name → type_identifier
+		        # function_definition → declarator field → function_declarator
+		        # function_declarator fields: declarator → identifier | ...
+		        #                             parameters → parameter_list
+		        ".c": {
+		            "parser": lang_pack.get_parser("c"),
+		            "lang_obj": lang_pack.get_language("c"),
+		            "query": """
+		                (preproc_include
+		                    path: (string_literal) @imp)
+		
+		                (preproc_include
+		                    path: (system_lib_string) @imp_system)
+		
+		                (struct_specifier
+		                    name: (type_identifier) @struct_name)
+		
+		                (function_definition
+		                    declarator: (function_declarator
+		                        declarator: (identifier) @func_name
+		                        parameters: (parameter_list) @func_params))
+		            """
+		        },
+		
+		        # ── C++ ─────────────────────────────────────────────────────────────────
+		        # Grammar: github.com/tree-sitter/tree-sitter-cpp
+		        #
+		        # Same as C plus:
+		        # using_declaration  child (no named field): qualified_identifier
+		        # namespace_alias_definition  fields: name → namespace_identifier
+		        #                             child (no named field): namespace_identifier
+		        # class_specifier    fields: name → type_identifier
+		        ".cpp": {
+		            "parser": lang_pack.get_parser("cpp"),
+		            "lang_obj": lang_pack.get_language("cpp"),
+		            "query": """
+		                (preproc_include
+		                    path: (string_literal) @imp)
+		
+		                (preproc_include
+		                    path: (system_lib_string) @imp_system)
+		
+		                (using_declaration
+		                    (qualified_identifier) @imp_using)
+		
+		                (namespace_alias_definition
+		                    name: (namespace_identifier) @imp_alias
+		                    (namespace_identifier) @imp)
+		
+		                (class_specifier
+		                    name: (type_identifier) @class_name)
+		
+		                (struct_specifier
+		                    name: (type_identifier) @struct_name)
+		
+		                (function_definition
+		                    declarator: (function_declarator
+		                        declarator: (identifier) @func_name
+		                        parameters: (parameter_list) @func_params))
+		            """
+		        },
+		    }
+		
+		    LANGUAGE_CONFIGS[".jsx"] = LANGUAGE_CONFIGS[".js"]
+		    LANGUAGE_CONFIGS[".h"]   = LANGUAGE_CONFIGS[".c"]
+		    LANGUAGE_CONFIGS[".hpp"] = LANGUAGE_CONFIGS[".cpp"]
+		
+		    return LANGUAGE_CONFIGS
+	</src>
+  </file>
+  <file n="counter.py">
+    <src>
+		import tiktoken
+		
+		def tok_count(valid,out):
+		    if not out:
+		        print("Error: Output File not Generated")
+		        return
+		    counter = tiktoken.get_encoding("o200k_base")
+		
+		    total =0
+		    for file in valid:
+		        with open(file["abspath"],"r",encoding="utf8") as f:
+		            content = f.read()
+		        total+=len(counter.encode(content))
+		
+		    with open(str(out),"r",encoding="utf8") as o:
+		        outcontent = o.read()
+		    outtok = len(counter.encode(outcontent))
+		
+		    return total,outtok
+	</src>
+  </file>
+  <file n="generate.py">
+    <src>
+		import xml.etree.ElementTree as ET
+		import sys
+		import os
+		from pathlib import Path
+		from summary import Summariser
+		import security
+		
+		def is_stdlib(module):
+		    
+		    return module in sys.stdlib_module_names
+		
+		def _out_path(filename):
+		    return  Path(os.getcwd())/filename
+		
+		def gen_struct(extracted,reponame):
+		    root = ET.Element("repo",{"n":str(reponame)})
+		    meta = ET.SubElement(root,"meta")
+		    deps = ET.SubElement(meta,"dep")
+		    imports=[]
+		    pathstem=[]
+		
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        pathstem.append(Path(file["file_name"]).stem)
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        for dep in file["imports"]:
+		            module = dep.split(".")[0]
+		            if not is_stdlib(module) and module not in pathstem and module not in imports:
+		                imports.append(module)
+		    
+		    deps.text = ",".join(imports)
+		
+		    files = ET.SubElement(root,"files")
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        f = ET.SubElement(files,"f",{"p":file["file_name"],"e":file["ext"]})
+		
+		        if file["imports"]:
+		                imp = ET.SubElement(f,"imp")
+		                imp.text = ",".join(file["imports"])
+		
+		        if file["functions"]:
+		            for func in file["functions"]:
+		                fn = ET.SubElement(f,"fn",{"n":func["name"],"p":func["params"]})
+		        
+		        if file["classes"]:
+		            for clas in file["classes"]:
+		                cls = ET.SubElement(f,"cls",{"n":clas})
+		                for func in file["classes"][clas]:
+		                    fn = ET.SubElement(cls,"fn",{"n":func["name"],"p":func["params"]})
+		        
+		        if file["struct"]:
+		            struct = ET.SubElement(f,"struct",{"n":file["struct"]})
+		        
+		        if file["enum"]:
+		            enum = ET.SubElement(f,"enum",{"n":file["enum"]})
+		
+		
+		    out = _out_path("structure.xml")
+		    tree = ET.ElementTree(root)
+		    ET.indent(tree)
+		    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+		    return out.resolve()
+		        
+		    
+		def gen_summ(extracted, reponame):
+		    summariser = Summariser()
+		    root = ET.Element("repo", {"n": str(reponame)})
+		    meta = ET.SubElement(root, "meta")
+		    deps = ET.SubElement(meta, "dep")
+		    imports = []
+		    pathstem = []
+		    filenames = []
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        filenames.append(Path(file["file_name"]))
+		        pathstem.append(Path(file["file_name"]).stem)
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        for dep in file["imports"]:
+		            module = dep.split(".")[0]
+		            if not is_stdlib(module) and module not in pathstem and module not in imports:
+		                imports.append(module)
+		
+		    deps.text = ",".join(imports)
+		    s = summariser.summarise_repo(reponame, imports, files=filenames)
+		    root.set("s", s)
+		
+		    # ── build batch input ─────────────────────────────────────────────────
+		    files_data = []
+		    valid_files = []
+		
+		    for file in extracted:
+		        if file.get('Fallback'):
+		            continue
+		        files_data.append({
+		            "path":      file["file_name"],
+		            "lang":      file["ext"],
+		            "imports":   file["imports"],
+		            "classes":   file["classes"],
+		            "functions": file["functions"],
+		        })
+		        valid_files.append(file)
+		
+		    # ── batched summarisation with live spinner ───────────────────────────
+		    BATCH_SIZE = 20
+		    all_summaries = []
+		
+		    try:
+		        import cli
+		        with cli.summary_progress_context(len(files_data)) as advance:
+		            for i in range(0, len(files_data), BATCH_SIZE):
+		                chunk = files_data[i : i + BATCH_SIZE]
+		                batch_summaries = summariser.summarise_files_batch(chunk)
+		                all_summaries.extend(batch_summaries)
+		                advance(
+		                    len(chunk),
+		                    label=f"batch {i // BATCH_SIZE + 1} / {((len(files_data) - 1) // BATCH_SIZE) + 1}"
+		                )
+		    except ImportError:
+		        # no UI — run silently
+		        for i in range(0, len(files_data), BATCH_SIZE):
+		            chunk = files_data[i : i + BATCH_SIZE]
+		            all_summaries.extend(summariser.summarise_files_batch(chunk))
+		
+		    # ── build XML ─────────────────────────────────────────────────────────
+		    files_el = ET.SubElement(root, "files")
+		
+		    for file, fs in zip(valid_files, all_summaries):
+		        mod = []
+		        f = ET.SubElement(files_el, "f", {
+		            "p": file["file_name"],
+		            "e": file["ext"],
+		            "s": fs
+		        })
+		
+		        if file["imports"]:
+		            imp = ET.SubElement(f, "imp")
+		            for im in file["imports"]:
+		                if im.split('.')[0] not in mod:
+		                    mod.append(im.split('.')[0])
+		            imp.text = ",".join(mod)
+		
+		        if file["functions"]:
+		            for func in file["functions"]:
+		                ET.SubElement(f, "fn", {
+		                    "n": func["name"],
+		                    "p": func["params"]
+		                })
+		
+		        if file["classes"]:
+		            for clas in file["classes"]:
+		                cls = ET.SubElement(f, "cls", {"n": clas})
+		                for func in file["classes"][clas]:
+		                    ET.SubElement(cls, "fn", {
+		                        "n": func["name"],
+		                        "p": func["params"]
+		                    })
+		
+		        if file["struct"]:
+		            ET.SubElement(f, "struct", {"n": file["struct"]})
+		
+		        if file["enum"]:
+		            ET.SubElement(f, "enum", {"n": file["enum"]})
+		
+		    out = _out_path("summary.xml")
+		    tree = ET.ElementTree(root)
+		    ET.indent(tree)
+		    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+		    return out.resolve()
+		
+		
+		def gen_concat(valid,reponame):
+		    root = ET.Element("repo",{"n":str(reponame)})
+		    
+		    for file in valid:
+		        with open(Path(file["abspath"]).resolve(),"r",encoding="utf8") as f:
+		            content = f.read()
+		        fl = ET.SubElement(root,"file",{"n":file["relpath"]})
+		        src = ET.SubElement(fl,"src")
+		        indented = "\n".join("\t\t" + line for line in content.splitlines())
+		        indented = security.redact(indented)
+		        src.text = "\n" + indented + "\n\t"
+		    
+		    out = _out_path("concat.xml")
+		    tree = ET.ElementTree(root)
+		    ET.indent(tree)
+		    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+		    return out.resolve()
+	</src>
+  </file>
+  <file n="keystore.py">
+    <src>
+		import os
+		from pathlib import Path
+		
+		CONFIG_DIR  = Path.home() / ".crespo"
+		CONFIG_FILE = CONFIG_DIR / "config"
+		
+		
+		def save_key(value: str) -&gt; None:
+		    CONFIG_DIR.mkdir(exist_ok=True)
+		    CONFIG_FILE.write_text(f"CRESPO_GROQ_KEY={value}\n")
+		    try:
+		        CONFIG_FILE.chmod(0o600)
+		    except Exception:
+		        pass
+		
+		
+		def load_key() -&gt; str | None:
+		    """Load from config file."""
+		    if not CONFIG_FILE.exists():
+		        return None
+		    for line in CONFIG_FILE.read_text().splitlines():
+		        if line.startswith("CRESPO_GROQ_KEY="):
+		            return line.split("=", 1)[1].strip()
+		    return None
+		
+		
+		def get_key(provided: str | None = None) -&gt; str | None:
+		    """
+		    Priority:
+		    1. --groq flag (provided argument)
+		    2. CRESPO_GROQ_KEY already in system environment
+		    3. Saved in ~/.crespo/config
+		
+		    If new key provided and differs from saved — update config.
+		    Always sets os.environ so summarise.py can access it directly.
+		    """
+		    saved_key = load_key()
+		
+		    # resolve which key to use
+		    if provided:
+		        if provided != saved_key:
+		            save_key(provided)  # new key — save it
+		        key = provided
+		
+		    elif os.environ.get("CRESPO_GROQ_KEY"):
+		        # already in system environment
+		        key = os.environ["CRESPO_GROQ_KEY"]
+		
+		    elif saved_key:
+		        key = saved_key
+		
+		    else:
+		        return None  # no key found anywhere
+		
+		    # always inject into os.environ
+		    # so summarise.py can just do os.environ.get("CRESPO_GROQ_KEY")
+		    os.environ["CRESPO_GROQ_KEY"] = key
+		    return key
+	</src>
+  </file>
+  <file n="main.py">
+    <src>
+		import argparse
+		import os
+		import sys
+		import time
+		import walker
+		import parse
+		import generate
+		import counter
+		import keystore
+		from pathlib import Path
+		
+		# import ui — handle missing gracefully
+		try:
+		    import cli
+		    HAS_UI = True
+		except ImportError:
+		    HAS_UI = False
+		
+		def main():
+		    # ── find cresbee image ────────────────────────────────────────────────────
+		    cresbee = None
+		    for p in [
+		        "cresbee.png",
+		        "assets/cresbee.png",
+		        str(Path(__file__).parent / "cresbee.png"),
+		        str(Path(__file__).parent / "assets" / "cresbee.png"),
+		    ]:
+		        if Path(p).exists():
+		            cresbee = p
+		            break
+		
+		    # ── argument parsing ──────────────────────────────────────────────────────
+		    parser = argparse.ArgumentParser(
+		        prog="crespo",
+		        description="Crespo — Crisp repos. Sharp AI.",
+		        add_help=False
+		    )
+		
+		    group = parser.add_mutually_exclusive_group()
+		    group.add_argument(
+		        "path",
+		        nargs="?",
+		        type=str,
+		        help="Root directory path of your codebase"
+		    )
+		    group.add_argument(
+		        "--git",
+		        type=str,
+		        help="GitHub URL to clone and analyse"
+		    )
+		
+		    parser.add_argument(
+		        "--mode",
+		        choices=["structure", "summarize", "concat"],
+		        default="structure",
+		        help="Output mode (default: structure)"
+		    )
+		    parser.add_argument(
+		        "--output",
+		        type=str,
+		        default=None,
+		        help="Output filename (default: &lt;reponame&gt;_&lt;mode&gt;.xml)"
+		    )
+		    parser.add_argument(
+		        "--groq",
+		        type=str,
+		        default=None,
+		        help="Groq API key for summarize mode"
+		    )
+		    parser.add_argument(
+		        "--help", "-h",
+		        action="store_true",
+		        help="Show this help message"
+		    )
+		
+		    args = parser.parse_args()
+		
+		    # ── help ──────────────────────────────────────────────────────────────────
+		    if args.help and (args.path is None and args.git is None):
+		        if HAS_UI:
+		            cli.print_header(cresbee)
+		            cli.print_usage()
+		        else:
+		            parser.print_help()
+		        sys.exit(0)
+		
+		    if args.groq and (args.path is None and args.git is None):
+		        saved_key = keystore.load_key()  # read stored key directly, no side effects
+		
+		        if args.groq == saved_key:
+		            if HAS_UI:
+		                cli.print_info("✓ This key is already saved.")
+		            else:
+		                print("✓ This key is already saved.")
+		        else:
+		            keystore.get_key(provided=args.groq)  # saves + injects into env
+		            if HAS_UI:
+		                cli.print_info("✓ Groq key saved.")
+		            else:
+		                print("✓ Groq key saved.")
+		        sys.exit(0)
+		        
+		
+		    if HAS_UI:
+		        cli.print_header(cresbee)
+		
+		    start_time = time.time()
+		    cloned = False
+		
+		    # ── resolve source FIRST ──────────────────────────────────────────────────
+		    if args.git:
+		        if HAS_UI:
+		            cli.print_info(f"Cloning {args.git} ...")
+		        try:
+		            import git
+		            import tempfile
+		
+		            temp_dir = tempfile.mkdtemp()
+		            git.Repo.clone_from(args.git, temp_dir, depth=1, single_branch=True)
+		            if HAS_UI:
+		                cli.print_info("Clone successful\n")
+		            path = temp_dir
+		            reponame = args.git.rstrip("/").split("/")[-1].replace(".git", "")
+		            cloned = True
+		        except Exception as e:
+		            if HAS_UI:
+		                cli.print_error(f"Clone failed: {e}")
+		            else:
+		                print(f"Error: Clone failed: {e}")
+		            sys.exit(1)
+		    else:
+		        path = args.path
+		        if not os.path.exists(path):
+		            if HAS_UI:
+		                cli.print_error(f"Path '{path}' does not exist!")
+		            else:
+		                print(f"Error: Path '{path}' does not exist!")
+		            sys.exit(1)
+		        reponame = Path(path).resolve().name
+		
+		    mode = args.mode
+		
+		    # ── scan ──────────────────────────────────────────────────────────────────
+		    if HAS_UI:
+		        cli.print_scan_start(args.git or path, mode)
+		    else:
+		        print(f"\nRepo: {reponame}  |  Mode: {mode}\nScanning...")
+		
+		    valid_files = walker.walk_dir(path=path)
+		
+		    if HAS_UI:
+		        cli.print_tree_classic([f["relpath"] for f in valid_files], root=reponame)
+		    else:
+		        for file in valid_files:
+		            print(f"  ✓  {file['relpath']}")
+		
+		    # ── parse ─────────────────────────────────────────────────────────────────
+		    if HAS_UI:
+		        cli.run_with_progress(valid_files, label="Parsing files")
+		    else:
+		        print(f"\nParsing {len(valid_files)} files...")
+		
+		    extracted = []
+		    for file in valid_files:
+		        signature = parse.extract_struct(
+		            Path(file["abspath"]).resolve(),
+		            mode,
+		            file["relpath"]
+		        )
+		        extracted.append(signature)
+		
+		    # ── groq key for summarize ────────────────────────────────────────────────
+		    if mode == "summarize":
+		        saved_key = keystore.load_key()
+		        provided_key = args.groq
+		
+		        if provided_key:
+		            if provided_key == saved_key:
+		                if HAS_UI:
+		                    cli.print_info("✓ Using saved Groq key.")
+		                groq_key = provided_key
+		            else:
+		                groq_key = keystore.get_key(provided=provided_key)  # saves + injects
+		                if HAS_UI:
+		                    cli.print_info("✓ New Groq key saved.")
+		                else:
+		                    print("✓ New Groq key saved.")
+		        else:
+		            groq_key = keystore.get_key()  # checks env + saved file
+		
+		        if not groq_key:
+		            if HAS_UI:
+		                cli.print_no_groq_key()
+		            else:
+		                print("Warning: No Groq key found. Falling back to structure mode.")
+		            mode = "structure"
+		
+		    # ── security scan ─────────────────────────────────────────────────────────
+		    secrets_count = sum(
+		        1 for e in extracted
+		        if isinstance(e, dict) and e.get("secrets_redacted", 0) &gt; 0
+		    )
+		    if HAS_UI:
+		        cli.print_security_result(secrets_count, len(valid_files))
+		    else:
+		        if secrets_count:
+		            print(f"Warning: {secrets_count} file(s) had secrets redacted.")
+		
+		    # ── generate ──────────────────────────────────────────────────────────────
+		    out_path = None
+		
+		    try:
+		        if mode == "structure":
+		            out_path = generate.gen_struct(extracted, reponame)
+		        elif mode == "summarize":
+		            out_path = generate.gen_summ(extracted, reponame)
+		        elif mode == "concat":
+		            out_path = generate.gen_concat(valid_files, reponame=reponame)
+		    except Exception as e:
+		        error = str(e)
+		        if "429" in error:
+		            if HAS_UI:
+		                cli.print_groq_fallback()
+		            else:
+		                print("Groq Limit Hit: falling back to Structure mode.")
+		            mode = "structure"
+		            out_path = generate.gen_struct(extracted, reponame)
+		        else:
+		            raise
+		
+		    # override output path if --output given
+		    if args.output and out_path:
+		        import shutil as _shutil
+		        _shutil.move(out_path, args.output)
+		        out_path = args.output
+		
+		    # ── token stats ───────────────────────────────────────────────────────────
+		    original_tokens, output_tokens = counter.tok_count(valid_files, out_path)
+		    elapsed = round(time.time() - start_time, 1)
+		
+		    if mode == "concat":
+		        if HAS_UI:
+		            cli.print_info(
+		                f"Concat mode preserves full source — "
+		                f"output is {output_tokens:,} tokens (XML overhead included)\n"
+		            )
+		            cli.print_loc(out_path)
+		        else:
+		            print(
+		                f"Concat mode preserves full source — "
+		                f"output is {output_tokens:,} tokens (XML overhead included)\n"
+		                f"Blueprint saved -&gt; {out_path}"
+		            )
+		
+		    else:
+		        if HAS_UI:
+		            cli.print_token_stats(
+		                original_tokens=original_tokens,
+		                output_tokens=output_tokens,
+		                mode=mode,
+		                output_file=out_path or "output.xml",
+		                elapsed=elapsed,
+		            )
+		        else:
+		            reduction = round((1 - output_tokens / max(original_tokens, 1)) * 100)
+		            print(f"\nDone!")
+		            print(f"Original:  {original_tokens:,} tokens")
+		            print(f"Output:    {output_tokens:,} tokens")
+		            print(f"Reduction: {reduction}%")
+		            print(f"Saved to:  {out_path}")
+		
+		    # ── cleanup cloned repo ───────────────────────────────────────────────────
+		    if cloned:
+		        import shutil
+		        shutil.rmtree(path, ignore_errors=True)
+		
+		
+		if __name__ == "__main__":
+		    main()
+	</src>
+  </file>
+  <file n="parse.py">
+    <src>
+		import tree_sitter_language_pack as lang_pack
+		import config
+		from pathlib import Path
+		from tree_sitter import QueryCursor,Parser
+		import security
+		
+		
+		def get_parent(node):
+		    CLASS_NODE_TYPES = {
+		        "class_definition",    # Python
+		        "class_declaration",   # JS, TS, Java
+		        "impl_item",           # Rust
+		    }
+		    
+		    ROOT_NODE_TYPES = {
+		        "module",              # Python
+		        "program",             # JS, TS
+		        "source_file",         # Rust, Go
+		        "translation_unit",    # C, C++
+		    }
+		
+		    current = node.parent
+		
+		    while current is not None:
+		        if current.type in CLASS_NODE_TYPES:
+		            name_node = current.child_by_field_name("name")
+		        
+		            if name_node:
+		                return name_node.text.decode("utf8",errors="ignore")
+		        
+		        if current.type in ROOT_NODE_TYPES:
+		            return None
+		        
+		        current=current.parent
+		        
+		    return None
+		
+		def extract_body(func_node,source_bytes,ext)-&gt;str:
+		    if not func_node:
+		        return ""
+		    body_node = func_node.child_by_field_name("body")
+		    if not body_node:
+		        return source_bytes[func_node.start_byte:func_node.end_byte].decode("utf8",errors="ignore")
+		    
+		    body = source_bytes[body_node.start_byte:func_node.end_byte].decode("utf8",errors="ignore").strip()
+		    body = strip_body(body,ext)
+		    body = truncate_body(body)
+		    return body
+		
+		
+		
+		def extract_struct(file,mode:str,rel_path=None):
+		    ext = Path(file).suffix.lower()
+		    configs = config.get_config()
+		    lang_config = configs.get(ext)
+		
+		    if not lang_config:
+		        return {"Fallback":True}
+		    
+		    
+		    lang_obj  =lang_config["lang_obj"]
+		    parser = Parser(lang_obj)
+		    query = lang_obj.query(lang_config["query"])
+		    
+		
+		    with open(file,encoding="utf8",errors="ignore") as f:
+		        source = f.read()
+		    
+		    source_bytes = source.encode(encoding="utf8",errors="ignore")
+		    tree = parser.parse(source_bytes)
+		    cursor = QueryCursor(query)
+		    captures = cursor.captures(tree.root_node)
+		
+		    functions=[]
+		    imports=[]
+		    classes = {}
+		    struct=[]
+		    enum=[]
+		
+		    func_nodes = sorted(
+		        captures.get("func_name",[]),key=lambda n:n.start_byte
+		    )
+		
+		    param_nodes = sorted(
+		        captures.get("func_params",[]),key=lambda n:n.start_byte
+		    )
+		
+		    for i,node_name in enumerate(func_nodes):
+		        name = node_name.text.decode("utf8",errors="ignore")
+		
+		        params = ""
+		        if i &lt; len(param_nodes):
+		            params = param_nodes[i].text.decode("utf8",errors="ignore")
+		
+		        
+		        parent = get_parent(node_name)
+		        body = extract_body(node_name.parent,source_bytes=source_bytes,ext=ext)
+		        if mode =="summarize":
+		            body = security.redact(body)
+		            fn = {"name":name,"params":params,"body":body}
+		        else:
+		            fn = {"name":name,"params":params}
+		
+		        if parent:
+		            if parent not in classes:
+		                classes[parent]=[]
+		            classes[parent].append(fn)
+		        else:
+		            functions.append(fn)  
+		
+		    for capture in ["imp","imp_from","imp_source"]:
+		        for  node in captures.get(capture,[]):
+		            text=node.text.decode("utf8",errors="ignore")
+		            if text not in imports:
+		                imports.append(text)
+		    
+		    for capture in ["class_name","interface_name","impl_for","type_name","jsx_component"]:
+		        for node in captures.get(capture,[]):
+		            text = node.text.decode("utf8",errors="ignore")
+		            if text not in classes:
+		                classes[text]=[]
+		    
+		    for node in captures.get("struct_name",[]):
+		        text = node.text.decode("utf8",errors="ignore")
+		        if text not in struct:
+		            struct.append(text)
+		        
+		    for node in captures.get("enum_name",[]):
+		        text=node.text.decode("utf8",errors="ignore")
+		        if text not in enum:
+		            enum.append(text)
+		        
+		    return {"file_name":rel_path or str(file),"ext":ext,"functions":functions,"classes":classes,"imports":imports,"struct":struct,"enum":enum}
+		    
+		    
+		
+		def strip_body(body: str, extension: str) -&gt; str:
+		    COMMENT_CONFIG = {
+		    ".py": {
+		        "single": ["#"],
+		        "block": []
+		    },
+		    ".js": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".jsx": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".ts": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".tsx": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".java": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".go": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".rs": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".c": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".h": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".cpp": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		    ".hpp": {
+		        "single": ["//"],
+		        "block": [("/*", "*/")]
+		    },
+		}
+		    config = COMMENT_CONFIG.get(
+		        extension,
+		        {"single": ["#", "//"], "block": [("/*", "*/")]}
+		    )
+		
+		    lines = body.splitlines()
+		    cleaned = []
+		
+		    in_block = False
+		    block_end = None
+		
+		    for line in lines:
+		        stripped = line.strip()
+		
+		        if not stripped:
+		            continue
+		
+		        # Currently inside block comment
+		        if in_block:
+		            if block_end in stripped:
+		                in_block = False
+		            continue
+		
+		        # Single-line comments
+		        if any(stripped.startswith(marker) for marker in config["single"]):
+		            continue
+		
+		        # Block comments
+		        started_block = False
+		        for start, end in config["block"]:
+		            if stripped.startswith(start):
+		                started_block = True
+		
+		                # Multi-line block comment
+		                if end not in stripped[len(start):]:
+		                    in_block = True
+		                    block_end = end
+		
+		                break
+		
+		        if started_block:
+		            continue
+		
+		        cleaned.append(line)
+		
+		    return "\n".join(cleaned)
+		
+		def truncate_body(body: str) -&gt; str:
+		    lines = body.split("\n")
+		    
+		    if len(lines) &lt;= 35:
+		        return body
+		    
+		    head = lines[:20]  # core logic
+		    tail = lines[-10:]  # return value
+		    
+		    return (
+		        "\n".join(head) +
+		        "\n# ...\n" +
+		        "\n".join(tail)
+		    )
+		
+	</src>
+  </file>
+  <file n="security.py">
+    <src>
+		import re
+		
+		SECRET_PATTERNS = [
+		    r'(?i)(api[_-]?key\s*[:=]\s*["\'])([^"\']+)(["\'])',
+		    r'(?i)(secret\s*[:=]\s*["\'])([^"\']+)(["\'])',
+		    r'(?i)(token\s*[:=]\s*["\'])([^"\']+)(["\'])',
+		    r'(?i)(password\s*[:=]\s*["\'])([^"\']+)(["\'])',
+		]
+		
+		def redact(text: str) -&gt; str:
+		    for pattern in SECRET_PATTERNS:
+		        text = re.sub(
+		            pattern,
+		            r'\1[REDACTED]\3',
+		            text
+		        )
+		    return text
+	</src>
+  </file>
+  <file n="summary.py">
+    <src>
+		from groq import Groq
+		import os
+		import cli
+		
+		
+		
+		class Summariser():
+		    PROMPTS = {
+		    
+		        "repo": """Describe this codebase in 2 sentence max 50 words.
+		        Include what it does, primary stack, core features.
+		        Repo: {repo_name}
+		        Dependencies: {deps}
+		        Files: {files}
+		        Return only the summary.""",
+		
+		        "file": """Describe this file's responsibility in 2-3 sentences max 50 words.
+		        Include what it does using technical terms,core features.
+		        File: {path}
+		        Language: {lang}
+		        Imports: {imports}
+		        Classes: {classes}
+		        Functions: {functions}
+		        Return only the summary.""",
+		        "files_batch": """Summarize each file below. For each write 1-2 sentences max 40 words.
+		            Use this format strictly:
+		            FILE_INDEX: &lt;summary&gt;
+		            One line per file, no extra text.
+		
+		            Files:
+		            {files_block}
+		
+		            Return only the indexed summaries.""",
+		
+		        }
+		    def __init__(self):
+		            self.client = Groq(api_key=os.getenv('CRESPO_GROQ_KEY'))
+		            self.systemprompt = """You are an expert senior software engineer and technical writer specializing in code analysis and distillation.
+		
+		                        Your task is to analyze a single file from a codebase and create a highly concise, information-dense summary optimized for LLM consumption.
+		
+		                        Rules:
+		                        - Be extremely precise and technical
+		                        - Focus on purpose, responsibilities, and key implementations
+		                        - Never use phrases like "This file", "This module", "The code contains"
+		                        - Assume the reader is an experienced developer
+		                        - Prioritize signal over politeness
+		                        - Keep summaries short but information-rich
+		
+		                        Output Format (strictly follow this):
+		                        [2 sentences maximum. Explain key responsibilities, important classes/functions, architecture decisions, and relationships with other parts of the project.]
+		
+		                        Style Guidelines:
+		                        - Use professional but natural language
+		                        - Highlight important patterns (e.g., threading, real-time processing, event-driven, etc.)
+		                        - Mention key technologies only if they are central
+		                        - If the file is low value (utils, config, tests), keep DESCRIPTION very short
+		                            """
+		
+		
+		    def get_prompt(self,type:str,**kwargs):
+		        template = self.PROMPTS.get(type)
+		        if not template:
+		            raise ValueError(f"Unknown Prompt type:{type}")
+		        return template.format(**kwargs)
+		
+		    def summarise_repo(self,repo_name,deps,files):
+		        userPrompt = self.get_prompt("repo",repo_name=repo_name,files = files,deps=deps)
+		        response = self.client.chat.completions.create(
+		            model="llama-3.1-8b-instant",
+		            messages=[{
+		                "role":"system",
+		                "content":self.systemprompt
+		            },
+		            {
+		                "role":"user",
+		                "content":userPrompt
+		            }],temperature=0.1,max_tokens=50
+		        )
+		        return response.choices[0].message.content.strip()
+		    
+		    def summarise_file(self,path,lang,imports,classes,functions):
+		        userPrompt = self.get_prompt("file",path=path,lang=lang,imports=imports,classes=classes,functions=functions)
+		        response = self.client.chat.completions.create(
+		            model="llama-3.1-8b-instant",
+		            messages=[{
+		                "role":"system",
+		                "content":self.systemprompt
+		            },
+		            {
+		                "role":"user",
+		                "content":userPrompt
+		            }],temperature=0.1,max_tokens=50
+		        )
+		        return response.choices[0].message.content.strip()
+		    
+		    def summarise_files_batch(self, files_data: list[dict]) -&gt; list[str]:
+		        lines = []
+		        for i, f in enumerate(files_data):
+		            lines.append(
+		                f"[{i}] File: {f['path']} | Lang: {f['lang']} | "
+		                f"Imports: {f['imports']} | "
+		                f"Classes: {list(f['classes'].keys()) if f['classes'] else []} | "
+		                f"Functions: {[fn['name'] for fn in f['functions']] if f['functions'] else []}"
+		            )
+		        files_block = "\n".join(lines)
+		        user_prompt = self.get_prompt("files_batch", files_block=files_block)
+		
+		        try:
+		            response = self.client.chat.completions.create(
+		                model="llama-3.1-8b-instant",
+		                messages=[
+		                    {"role": "system", "content": self.systemprompt},
+		                    {"role": "user",   "content": user_prompt},
+		                ],
+		                temperature=0.1,
+		                max_tokens=60 * len(files_data),
+		            )
+		            raw = response.choices[0].message.content.strip()
+		            return self._parse_batch_response(raw, len(files_data))
+		
+		        except Exception as e:
+		            error = str(e)
+		
+		            # ── token limit: split batch in half and retry ────────────────────
+		            if "413" in error or "too large" in error.lower() or "context" in error.lower():
+		                if len(files_data) == 1:
+		                    # can't split further — return fallback for this single file
+		                    return ["Summary unavailable."]
+		                mid = len(files_data) // 2
+		                left  = self.summarise_files_batch(files_data[:mid])
+		                right = self.summarise_files_batch(files_data[mid:])
+		                return left + right
+		
+		            # ── rate limit: wait and retry once ──────────────────────────────
+		            elif "429" in error:
+		                import time
+		                time.sleep(10)
+		                try:
+		                    response = self.client.chat.completions.create(
+		                        model="llama-3.1-8b-instant",
+		                        messages=[
+		                            {"role": "system", "content": self.systemprompt},
+		                            {"role": "user",   "content": user_prompt},
+		                        ],
+		                        temperature=0.1,
+		                        max_tokens=60 * len(files_data),
+		                    )
+		                    raw = response.choices[0].message.content.strip()
+		                    return self._parse_batch_response(raw, len(files_data))
+		                except Exception:
+		                    # retry also failed — raise so gen_summ can catch and fallback to structure
+		                    raise
+		
+		            else:
+		                raise
+		
+		
+		    def _parse_batch_response(self, raw: str, expected: int) -&gt; list[str]:
+		        """Parse 'FILE_INDEX: summary' lines back into an ordered list."""
+		        results = [""] * expected
+		        for line in raw.splitlines():
+		            line = line.strip()
+		            if not line:
+		                continue
+		            if ":" not in line:
+		                continue
+		            idx_part, _, summary = line.partition(":")
+		            # handle both "FILE_0" and "0" prefixes
+		            idx_str = idx_part.strip().lstrip("FILE_").lstrip("FILE").strip()
+		            try:
+		                idx = int(idx_str)
+		                if 0 &lt;= idx &lt; expected:
+		                    results[idx] = summary.strip()
+		            except ValueError:
+		                continue
+		        # fill any unparsed slots with a fallback
+		        return [s if s else "Summary unavailable." for s in results]
+		        
+	</src>
+  </file>
+  <file n="test.py">
+    <src>
+		import pytest
+		from unittest.mock import MagicMock, patch
+		from pathlib import Path
+		from summary import Summariser
+		import keystore
+		import os
+		import sys
+		import tempfile
+		
+		
+		# ─── Fixtures ────────────────────────────────────────────────────────────────
+		
+		def make_file(path="main.py", ext="py", imports=None, classes=None, functions=None):
+		    """Fixture in gen_summ/extracted shape (file_name/ext keys)."""
+		    return {
+		        "file_name": path,
+		        "ext":       ext,
+		        "imports":   imports or [],
+		        "classes":   classes or {},
+		        "functions": functions or [],
+		        "struct":    [],
+		        "enum":      [],
+		    }
+		
+		def make_batch_file(path="main.py", ext="py", imports=None, classes=None, functions=None):
+		    """Fixture in summarise_files_batch shape (path/lang keys)."""
+		    return {
+		        "path":      path,
+		        "lang":      ext,
+		        "imports":   imports or [],
+		        "classes":   classes or {},
+		        "functions": functions or [],
+		    }
+		
+		def make_fallback():
+		    return {"Fallback": True, "file_name": "skip.py"}
+		
+		
+		# ─── summary.py: _parse_batch_response ───────────────────────────────────────
+		
+		class TestParseBatchResponse:
+		
+		    def setup_method(self):
+		        self.s = Summariser.__new__(Summariser)
+		
+		    def test_normal_parse(self):
+		        raw = "0: Handles routing\n1: DB models\n2: Auth logic"
+		        result = self.s._parse_batch_response(raw, 3)
+		        assert result == ["Handles routing", "DB models", "Auth logic"]
+		
+		    def test_file_prefix(self):
+		        raw = "FILE_0: Handles routing\nFILE_1: DB models"
+		        result = self.s._parse_batch_response(raw, 2)
+		        assert result == ["Handles routing", "DB models"]
+		
+		    def test_missing_index_fills_fallback(self):
+		        raw = "0: Handles routing\n2: Auth logic"
+		        result = self.s._parse_batch_response(raw, 3)
+		        assert result[0] == "Handles routing"
+		        assert result[1] == "Summary unavailable."
+		        assert result[2] == "Auth logic"
+		
+		    def test_empty_response(self):
+		        result = self.s._parse_batch_response("", 3)
+		        assert result == ["Summary unavailable."] * 3
+		
+		    def test_garbage_lines_ignored(self):
+		        raw = "Sure! Here are summaries:\n0: Does routing\nHope this helps!"
+		        result = self.s._parse_batch_response(raw, 1)
+		        assert result == ["Does routing"]
+		
+		    def test_out_of_range_index_ignored(self):
+		        raw = "0: Valid\n99: Out of range"
+		        result = self.s._parse_batch_response(raw, 1)
+		        assert result == ["Valid"]
+		
+		    def test_single_file(self):
+		        raw = "0: Single file summary"
+		        result = self.s._parse_batch_response(raw, 1)
+		        assert result == ["Single file summary"]
+		
+		
+		# ─── summary.py: summarise_files_batch ───────────────────────────────────────
+		
+		class TestSummariseFilesBatch:
+		
+		    def _make_summariser(self, response_text):
+		        s = Summariser.__new__(Summariser)
+		        mock_response = MagicMock()
+		        mock_response.choices[0].message.content = response_text
+		        s.client = MagicMock()
+		        s.client.chat.completions.create.return_value = mock_response
+		        s.systemprompt = "sys"
+		        s.PROMPTS = Summariser.PROMPTS
+		        return s
+		
+		    def test_normal_batch(self):
+		        s = self._make_summariser("0: Does routing\n1: Handles DB")
+		        files = [make_batch_file("main.py"), make_batch_file("db.py")]
+		        result = s.summarise_files_batch(files)
+		        assert len(result) == 2
+		        assert result[0] == "Does routing"
+		        assert result[1] == "Handles DB"
+		
+		    def test_single_file_batch(self):
+		        s = self._make_summariser("0: Entry point")
+		        result = s.summarise_files_batch([make_batch_file("app.py")])
+		        assert result == ["Entry point"]
+		
+		    def test_413_splits_and_retries(self):
+		        s = Summariser.__new__(Summariser)
+		        s.systemprompt = "sys"
+		        s.PROMPTS = Summariser.PROMPTS
+		        call_count = [0]
+		
+		        def mock_create(**kwargs):
+		            call_count[0] += 1
+		            if call_count[0] == 1:
+		                raise Exception("413 request too large")
+		            mock_resp = MagicMock()
+		            # each half will have 1-2 files
+		            mock_resp.choices[0].message.content = "0: First\n1: Second"
+		            return mock_resp
+		
+		        s.client = MagicMock()
+		        s.client.chat.completions.create.side_effect = lambda **kw: mock_create(**kw)
+		
+		        files = [make_batch_file("a.py"), make_batch_file("b.py"), make_batch_file("c.py")]
+		        result = s.summarise_files_batch(files)
+		        assert len(result) == 3
+		        assert "Summary unavailable." not in result
+		
+		    def test_413_single_file_returns_fallback(self):
+		        s = Summariser.__new__(Summariser)
+		        s.systemprompt = "sys"
+		        s.PROMPTS = Summariser.PROMPTS
+		        s.client = MagicMock()
+		        s.client.chat.completions.create.side_effect = Exception("413 too large")
+		        result = s.summarise_files_batch([make_batch_file("huge.py")])
+		        assert result == ["Summary unavailable."]
+		
+		    def test_429_retries_after_wait(self):
+		        s = self._make_summariser("0: Retry success")
+		        call_count = [0]
+		
+		        def side_effect(**kwargs):
+		            call_count[0] += 1
+		            if call_count[0] == 1:
+		                raise Exception("429 rate limit")
+		            mock_resp = MagicMock()
+		            mock_resp.choices[0].message.content = "0: Retry success"
+		            return mock_resp
+		
+		        s.client.chat.completions.create.side_effect = side_effect
+		
+		        with patch("time.sleep") as mock_sleep:
+		            result = s.summarise_files_batch([make_batch_file("app.py")])
+		            mock_sleep.assert_called_once_with(10)
+		        assert result == ["Retry success"]
+		
+		    def test_429_retry_also_fails_raises(self):
+		        s = Summariser.__new__(Summariser)
+		        s.systemprompt = "sys"
+		        s.PROMPTS = Summariser.PROMPTS
+		        s.client = MagicMock()
+		        s.client.chat.completions.create.side_effect = Exception("429 rate limit")
+		
+		        with patch("time.sleep"):
+		            with pytest.raises(Exception):
+		                s.summarise_files_batch([make_batch_file("app.py")])
+		
+		    def test_unknown_error_raises(self):
+		        s = Summariser.__new__(Summariser)
+		        s.systemprompt = "sys"
+		        s.PROMPTS = Summariser.PROMPTS
+		        s.client = MagicMock()
+		        s.client.chat.completions.create.side_effect = Exception("connection refused")
+		
+		        with pytest.raises(Exception):
+		            s.summarise_files_batch([make_batch_file("app.py")])
+		
+		
+		# ─── generate.py: gen_summ batch fallback ────────────────────────────────────
+		
+		class TestGenSummBatchFallback:
+		
+		    def test_failed_batch_fills_unavailable(self):
+		        import generate
+		        import importlib
+		
+		        extracted = [
+		            make_file("a.py", imports=["os"], functions=[{"name": "run", "params": ""}]),
+		            make_file("b.py", imports=["sys"], functions=[{"name": "main", "params": ""}]),
+		        ]
+		
+		        mock_cli = MagicMock()
+		        advance_mock = MagicMock()
+		        mock_cli.summary_progress_context.return_value.__enter__ = MagicMock(return_value=advance_mock)
+		        mock_cli.summary_progress_context.return_value.__exit__ = MagicMock(return_value=False)
+		
+		        # patch cli into generate's own namespace directly — no import needed
+		        with patch.object(generate, "cli", mock_cli, create=True), \
+		            patch("generate.Summariser") as MockSummariser:
+		            instance = MockSummariser.return_value
+		            instance.summarise_repo.return_value = "A test repo"
+		            instance.summarise_files_batch.side_effect = Exception("500 error")
+		            generate.gen_summ(extracted, "testrepo")
+		
+		        import xml.etree.ElementTree as ET
+		        tree = ET.parse("summarised.xml")
+		        summaries = [f.get("s") for f in tree.findall(".//f")]
+		        assert all(s == "Summary unavailable." for s in summaries)
+		
+		
+		# ─── keystore.py ─────────────────────────────────────────────────────────────
+		
+		class TestKeystore:
+		
+		    def setup_method(self):
+		        self.tmp = tempfile.mkdtemp()
+		        keystore.CONFIG_DIR  = Path(self.tmp)
+		        keystore.CONFIG_FILE = Path(self.tmp) / "config"
+		        os.environ.pop("CRESPO_GROQ_KEY", None)
+		
+		    def teardown_method(self):
+		        os.environ.pop("CRESPO_GROQ_KEY", None)
+		
+		    def test_save_and_load(self):
+		        keystore.save_key("test-key-123")
+		        assert keystore.load_key() == "test-key-123"
+		
+		    def test_load_missing_file_returns_none(self):
+		        assert keystore.load_key() is None
+		
+		    def test_get_key_provided_saves_and_returns(self):
+		        key = keystore.get_key(provided="new-key")
+		        assert key == "new-key"
+		        assert keystore.load_key() == "new-key"
+		        assert os.environ.get("CRESPO_GROQ_KEY") == "new-key"
+		
+		    def test_get_key_no_args_reads_saved(self):
+		        keystore.save_key("saved-key")
+		        key = keystore.get_key()
+		        assert key == "saved-key"
+		
+		    def test_get_key_env_takes_priority_over_saved(self):
+		        keystore.save_key("saved-key")
+		        os.environ["CRESPO_GROQ_KEY"] = "env-key"
+		        key = keystore.get_key()
+		        assert key == "env-key"
+		
+		    def test_get_key_provided_overwrites_saved(self):
+		        keystore.save_key("old-key")
+		        key = keystore.get_key(provided="new-key")
+		        assert key == "new-key"
+		        assert keystore.load_key() == "new-key"
+		
+		    def test_get_key_nothing_returns_none(self):
+		        assert keystore.get_key() is None
+		
+		    def test_same_key_not_rewritten(self):
+		        keystore.save_key("same-key")
+		        mtime_before = keystore.CONFIG_FILE.stat().st_mtime
+		        keystore.get_key(provided="same-key")
+		        mtime_after = keystore.CONFIG_FILE.stat().st_mtime
+		        assert mtime_before == mtime_after
+		
+		
+		# ─── main.py: groq key block ─────────────────────────────────────────────────
+		
+		class TestMainGroqKeyBlock:
+		
+		    def setup_method(self):
+		        self.tmp = tempfile.mkdtemp()
+		        keystore.CONFIG_DIR  = Path(self.tmp)
+		        keystore.CONFIG_FILE = Path(self.tmp) / "config"
+		        os.environ.pop("CRESPO_GROQ_KEY", None)
+		
+		    def teardown_method(self):
+		        os.environ.pop("CRESPO_GROQ_KEY", None)
+		
+		    def test_new_key_saved_when_none_stored(self):
+		        import main as main_mod
+		        with patch("sys.argv", ["crespo", "--groq", "brand-new-key"]):
+		            with patch.object(main_mod, "HAS_UI", True), \
+		                 patch("cli.print_header"), \
+		                 patch("cli.print_info") as mock_info:
+		                with pytest.raises(SystemExit):
+		                    main_mod.main()
+		        assert keystore.load_key() == "brand-new-key"
+		        mock_info.assert_called_with("✓ Groq key saved.")
+		
+		    def test_same_key_reports_already_saved(self):
+		        keystore.save_key("existing-key")
+		        import main as main_mod
+		        with patch("sys.argv", ["crespo", "--groq", "existing-key"]):
+		            with patch.object(main_mod, "HAS_UI", True), \
+		                 patch("cli.print_header"), \
+		                 patch("cli.print_info") as mock_info:
+		                with pytest.raises(SystemExit):
+		                    main_mod.main()
+		        mock_info.assert_called_with("✓ This key is already saved.")
+		
+		    def test_different_key_overwrites(self):
+		        keystore.save_key("old-key")
+		        import main as main_mod
+		        with patch("sys.argv", ["crespo", "--groq", "new-key"]):
+		            with patch.object(main_mod, "HAS_UI", True), \
+		                 patch("cli.print_header"), \
+		                 patch("cli.print_info"):
+		                with pytest.raises(SystemExit):
+		                    main_mod.main()
+		        assert keystore.load_key() == "new-key"
+		
+		    def test_no_key_falls_back_to_structure(self):
+		        import main as main_mod
+		        with patch("sys.argv", ["crespo", ".", "--mode", "summarize"]):
+		            with patch.object(main_mod, "HAS_UI", True), \
+		                 patch("cli.print_header"), \
+		                 patch("cli.print_no_groq_key") as mock_warn, \
+		                 patch("walker.walk_dir", return_value=[]), \
+		                 patch("generate.gen_struct", return_value=Path("out.xml")), \
+		                 patch("counter.tok_count", return_value=(100, 10)), \
+		                 patch("cli.print_token_stats"), \
+		                 patch("cli.print_scan_start"), \
+		                 patch("cli.print_tree_classic"), \
+		                 patch("cli.run_with_progress"), \
+		                 patch("cli.print_security_result"), \
+		                 patch("os.path.exists", return_value=True):
+		                main_mod.main()
+		        mock_warn.assert_called_once()
+	</src>
+  </file>
+  <file n="walker.py">
+    <src>
+		import os
+		from pathlib import Path
+		import fnmatch
+		import config
+		
+		
+		def _load_gitignore_patterns(base_path: Path) -&gt; list[str]:
+		    """
+		    Load all .gitignore files from base_path downward.
+		    Returns a flat list of patterns (relative to base_path).
+		    """
+		    patterns = []
+		    for root, dirs, files in os.walk(base_path):
+		        if ".gitignore" in files:
+		            gitignore = Path(root) / ".gitignore"
+		            rel_root = Path(root).relative_to(base_path)
+		            try:
+		                for line in gitignore.read_text(encoding="utf8", errors="ignore").splitlines():
+		                    line = line.strip()
+		                    if not line or line.startswith("#"):
+		                        continue
+		                    # prefix non-root patterns with their subdirectory
+		                    if str(rel_root) != ".":
+		                        patterns.append(str(rel_root / line))
+		                    else:
+		                        patterns.append(line)
+		            except Exception:
+		                pass
+		        # don't descend into ignored folders
+		        dirs[:] = [d for d in dirs if not d.startswith(".")]
+		    return patterns
+		
+		
+		def _is_gitignored(rel_path: str, patterns: list[str]) -&gt; bool:
+		    """
+		    Return True if rel_path matches any gitignore pattern.
+		    Handles directory patterns (trailing /), wildcards, and negation (!).
+		    """
+		    rel = rel_path.replace("\\", "/")
+		    parts = Path(rel).parts
+		
+		    for pattern in patterns:
+		        # negation — never ignore
+		        if pattern.startswith("!"):
+		            continue
+		
+		        pat = pattern.rstrip("/")
+		        pat_unix = pat.replace("\\", "/")
+		
+		        # match against full path and each suffix (so node_modules matches anywhere)
+		        candidates = [rel]
+		        for i in range(len(parts)):
+		            candidates.append("/".join(parts[i:]))
+		
+		        for candidate in candidates:
+		            if fnmatch.fnmatch(candidate, pat_unix):
+		                return True
+		            # also match just the filename
+		            if fnmatch.fnmatch(Path(candidate).name, pat_unix):
+		                return True
+		
+		    return False
+		
+		
+		def walk_dir(path: str, respect_gitignore: bool = True):
+		    IGNORE_FOLDERS = {
+		        ".git", ".github", ".venv", "venv", "node_modules",
+		        "__pycache__", ".pytest_cache", ".mypy_cache", ".tox",
+		        ".next", "dist", "build", "target", "site-packages",
+		        ".idea", ".vscode",
+		    }
+		    IGNORE_FILES = {
+		        "package-lock.json", "yarn.lock", ".DS_Store", ".gitignore", ".env"
+		    }
+		    CONFIG_FILES = {
+		        "package.json", "requirements.txt", "Cargo.toml", "go.mod", "Dockerfile"
+		    }
+		
+		    base_path = Path(path).resolve()
+		    gitignore_patterns = _load_gitignore_patterns(base_path) if respect_gitignore else []
+		
+		    print(f"\n Walking Directory: {path}\n")
+		
+		    valid_files = []
+		
+		    for root, dirs, files in os.walk(path):
+		        rel_root = str(Path(root).resolve().relative_to(base_path))
+		
+		        # filter dirs in-place
+		        dirs[:] = [
+		            d for d in dirs
+		            if d not in IGNORE_FOLDERS
+		            and not d.startswith(".")
+		            and not d.startswith("_")
+		            and not _is_gitignored(
+		                str(Path(rel_root) / d) if rel_root != "." else d,
+		                gitignore_patterns
+		            )
+		        ]
+		
+		        for file in files:
+		            if file in IGNORE_FILES:
+		                continue
+		            if file.startswith(".env"):
+		                continue
+		
+		            full_path = os.path.join(root, file)
+		            rel_path = str(Path(full_path).resolve().relative_to(base_path))
+		
+		            # check gitignore
+		            if respect_gitignore and _is_gitignored(rel_path, gitignore_patterns):
+		                continue
+		
+		            isconfig = file in CONFIG_FILES
+		            if not isconfig and Path(file).suffix.lower() not in config.get_config():
+		                continue
+		
+		            valid_files.append({
+		                "abspath":  full_path,
+		                "relpath":  rel_path,
+		                "isconfig": isconfig,
+		                "ext":      Path(file).suffix.lower(),
+		            })
+		
+		    return valid_files
+	</src>
+  </file>
+</repo>

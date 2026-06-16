@@ -1,5 +1,5 @@
 .env
-*.xml
+
 .*
 
 # Build artifacts
@@ -7,3 +7,5 @@ dist/
 build/
 *.egg-info/
 .eggs/
+
+*demovid

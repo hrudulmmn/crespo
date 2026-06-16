@@ -1,0 +1,194 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="tars-chat">
+  <meta>
+    <dep>"@clerk/nextjs/server","tailwindcss","next","@/lib/providers","next/font/google",","next/navigation","@/components/layout/ChatLayout","@clerk/nextjs","@/lib/utils","react","@/convex/_generated/dataModel","convex/react","@/convex/_generated/api","lucide-react","@/components/chat/Sidebar","@/components/chat/ChatArea","@/hooks/useCurrentUser","@/hooks/useOnlineStatus","convex/values","convex/server","convex/react-clerk","clsx","tailwind-merge","date-fns"</dep>
+  </meta>
+  <files>
+    <f p="middleware.ts" e=".ts">
+      <imp>"@clerk/nextjs/server"</imp>
+    </f>
+    <f p="next-env.d.ts" e=".ts" />
+    <f p="next.config.js" e=".js" />
+    <f p="postcss.config.js" e=".js" />
+    <f p="tailwind.config.ts" e=".ts">
+      <imp>"tailwindcss"</imp>
+    </f>
+    <f p="app\layout.tsx" e=".tsx">
+      <imp>"next","@/lib/providers","next/font/google","./globals.css"</imp>
+      <fn n="RootLayout" p="({&#10;  children,&#10;}: {&#10;  children: React.ReactNode;&#10;})" />
+      <cls n="html" />
+      <cls n="body" />
+      <cls n="Providers" />
+    </f>
+    <f p="app\page.tsx" e=".tsx">
+      <imp>"@clerk/nextjs/server","next/navigation"</imp>
+      <fn n="Home" p="()" />
+    </f>
+    <f p="app\chat\layout.tsx" e=".tsx">
+      <imp>"@clerk/nextjs/server","next/navigation"</imp>
+      <fn n="ChatLayout" p="({ children }: { children: React.ReactNode })" />
+    </f>
+    <f p="app\chat\page.tsx" e=".tsx">
+      <imp>"@/components/layout/ChatLayout"</imp>
+      <fn n="ChatPage" p="()" />
+    </f>
+    <f p="app\sign-in\page.tsx" e=".tsx">
+      <imp>"@clerk/nextjs"</imp>
+      <fn n="SignInPage" p="()" />
+      <cls n="div" />
+      <cls n="p" />
+      <cls n="h1" />
+    </f>
+    <f p="app\sign-up\page.tsx" e=".tsx">
+      <imp>"@clerk/nextjs"</imp>
+      <fn n="SignUpPage" p="()" />
+      <cls n="div" />
+      <cls n="h1" />
+      <cls n="p" />
+    </f>
+    <f p="components\chat\Avatar.tsx" e=".tsx">
+      <imp>"@/lib/utils"</imp>
+      <fn n="getColor" p="(name: string)" />
+      <fn n="Avatar" p="({ imageUrl, name, size = &quot;md&quot;, isOnline }: AvatarProps)" />
+      <cls n="AvatarProps" />
+      <cls n="div" />
+    </f>
+    <f p="components\chat\ChatArea.tsx" e=".tsx">
+      <imp>"react","@/convex/_generated/dataModel","convex/react","@/convex/_generated/api","lucide-react","./Avatar","./Message","./TypingIndicator","@/lib/utils"</imp>
+      <fn n="ChatArea" p="({ conversationId, currentClerkId, onBack }: ChatAreaProps)" />
+      <fn n="scrollToBottom" p="()" />
+      <fn n="handleInputChange" p="(e: React.ChangeEvent&lt;HTMLInputElement&gt;)" />
+      <fn n="handleSend" p="()" />
+      <fn n="handleKeyDown" p="(e: React.KeyboardEvent)" />
+      <fn n="MessageSkeleton" p="()" />
+      <cls n="ChatAreaProps" />
+      <cls n="div" />
+      <cls n="p" />
+      <cls n="span" />
+      <cls n="h2" />
+      <cls n="button" />
+    </f>
+    <f p="components\chat\ConversationItem.tsx" e=".tsx">
+      <imp>"convex/react","@/lib/utils","./Avatar","@/convex/_generated/api","@/convex/_generated/dataModel"</imp>
+      <fn n="ConversationItem" p="({&#10;  conversation,&#10;  currentClerkId,&#10;  isSelected,&#10;  onSelect,&#10;  searchQuery,&#10;}: ConversationItemProps)" />
+      <cls n="ConversationItemProps" />
+      <cls n="span" />
+      <cls n="div" />
+      <cls n="p" />
+      <cls n="button" />
+    </f>
+    <f p="components\chat\CreateGroupModal.tsx" e=".tsx">
+      <imp>"react","@/convex/_generated/dataModel","@/convex/_generated/api","convex/react","lucide-react","./Avatar","@/lib/utils"</imp>
+      <fn n="CreateGroupModal" p="({ currentClerkId, onClose, onCreated }: CreateGroupModalProps)" />
+      <fn n="toggleUser" p="(clerkId: string)" />
+      <fn n="handleCreate" p="()" />
+      <cls n="CreateGroupModalProps" />
+      <cls n="button" />
+      <cls n="div" />
+      <cls n="h2" />
+      <cls n="p" />
+    </f>
+    <f p="components\chat\Message.tsx" e=".tsx">
+      <imp>"react","lucide-react","convex/react","@/convex/_generated/dataModel","@/convex/_generated/api","./Avatar","@/lib/utils"</imp>
+      <fn n="Message" p="({&#10;  message,&#10;  isMine,&#10;  senderUser,&#10;  showAvatar,&#10;  showName,&#10;  currentClerkId,&#10;  isGroup,&#10;}: MessageProps)" />
+      <fn n="handleDelete" p="()" />
+      <fn n="handleReaction" p="(emoji: string)" />
+      <cls n="MessageProps" />
+      <cls n="button" />
+      <cls n="span" />
+      <cls n="div" />
+      <cls n="p" />
+      <cls n="em" />
+    </f>
+    <f p="components\chat\Sidebar.tsx" e=".tsx">
+      <imp>"react","@/convex/_generated/api","convex/react","@clerk/nextjs","@/convex/_generated/dataModel","lucide-react","./ConversationItem","./UserSearch","./CreateGroupModal","@/lib/utils"</imp>
+      <fn n="Sidebar" p="({ currentClerkId, selectedConversationId, onSelectConversation }: SidebarProps)" />
+      <fn n="ConversationSkeleton" p="()" />
+      <cls n="SidebarProps" />
+      <cls n="p" />
+      <cls n="button" />
+      <cls n="div" />
+      <cls n="h1" />
+    </f>
+    <f p="components\chat\TypingIndicator.tsx" e=".tsx">
+      <fn n="TypingIndicator" p="({ text }: { text: string })" />
+      <cls n="div" />
+      <cls n="span" />
+    </f>
+    <f p="components\chat\UserSearch.tsx" e=".tsx">
+      <imp>"convex/react","./Avatar","lucide-react","@/convex/_generated/api","@/convex/_generated/dataModel"</imp>
+      <fn n="UserSearch" p="({ currentClerkId, searchQuery, onSelectUser }: UserSearchProps)" />
+      <fn n="handleSelectUser" p="(otherClerkId: string)" />
+      <cls n="UserSearchProps" />
+      <cls n="div" />
+      <cls n="p" />
+      <cls n="span" />
+      <cls n="button" />
+    </f>
+    <f p="components\layout\ChatLayout.tsx" e=".tsx">
+      <imp>"react","@/components/chat/Sidebar","@/convex/_generated/dataModel","@clerk/nextjs","@/components/chat/ChatArea","@/hooks/useCurrentUser","@/hooks/useOnlineStatus"</imp>
+      <fn n="ChatLayout" p="()" />
+      <fn n="handleSelectConversation" p="(id: Id&lt;&quot;conversations&quot;&gt;)" />
+      <fn n="handleBack" p="()" />
+      <cls n="div" />
+      <cls n="h2" />
+      <cls n="p" />
+    </f>
+    <f p="convex\auth.config.ts" e=".ts" />
+    <f p="convex\conversations.ts" e=".ts">
+      <imp>"convex/values","./_generated/server"</imp>
+    </f>
+    <f p="convex\messages.ts" e=".ts">
+      <imp>"convex/values","./_generated/server"</imp>
+    </f>
+    <f p="convex\readReceipts.ts" e=".ts">
+      <imp>"convex/values","./_generated/server"</imp>
+    </f>
+    <f p="convex\schema.ts" e=".ts">
+      <imp>"convex/server","convex/values"</imp>
+    </f>
+    <f p="convex\typing.ts" e=".ts">
+      <imp>"convex/values","./_generated/server"</imp>
+    </f>
+    <f p="convex\users.ts" e=".ts">
+      <imp>"convex/values","./_generated/server"</imp>
+    </f>
+    <f p="convex\_generated\api.d.ts" e=".ts">
+      <imp>"../conversations.js","../messages.js","../readReceipts.js","../typing.js","../users.js","convex/server"</imp>
+    </f>
+    <f p="convex\_generated\api.js" e=".js">
+      <imp>"convex/server"</imp>
+    </f>
+    <f p="convex\_generated\dataModel.d.ts" e=".ts">
+      <imp>"convex/server","../schema.js","convex/values"</imp>
+    </f>
+    <f p="convex\_generated\server.d.ts" e=".ts">
+      <imp>"convex/server","./dataModel.js"</imp>
+    </f>
+    <f p="convex\_generated\server.js" e=".js">
+      <imp>"convex/server"</imp>
+    </f>
+    <f p="hooks\useCurrentUser.ts" e=".ts">
+      <imp>"@clerk/nextjs","react","@/convex/_generated/api","convex/react"</imp>
+      <fn n="useCurrentUser" p="()" />
+    </f>
+    <f p="hooks\useOnlineStatus.ts" e=".ts">
+      <imp>"convex/react","react","@/convex/_generated/api"</imp>
+      <fn n="useOnlineStatus" p="(clerkId: string | undefined)" />
+      <fn n="handleVisibilityChange" p="()" />
+      <fn n="handleBeforeUnload" p="()" />
+    </f>
+    <f p="lib\providers.tsx" e=".tsx">
+      <imp>"@clerk/nextjs","convex/react","convex/react-clerk","react"</imp>
+      <fn n="Providers" p="({ children }: { children: ReactNode })" />
+      <cls n="ClerkProvider" />
+      <cls n="ConvexProviderWithClerk" />
+    </f>
+    <f p="lib\utils.ts" e=".ts">
+      <imp>"clsx","tailwind-merge","date-fns"</imp>
+      <fn n="cn" p="(...inputs: ClassValue[])" />
+      <fn n="formatMessageTime" p="(timestamp: number)" />
+      <fn n="formatConversationTime" p="(timestamp: number)" />
+    </f>
+  </files>
+</repo>

@@ -1,0 +1,408 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="requests">
+  <meta>
+    <dep>setuptools,os.path,InvalidHeader,ProxyError,SSLError,is_prepared,HTTPError,Timeout,PoolManager,.auth,.models,urllib3.poolmanager,urllib3.exceptions,urllib3.util.retry,.compat,.exceptions,.structures,.utils,urllib3.contrib.socks,urllib3.connectionpool,,urllib3.util,.cookies,._types,typing_extensions,http.cookiejar,._internal_utils,certifi,chardet,simplejson,cookiejar,collections.abc,http.cookies,urllib.parse,urllib.request,_typeshed,JSONDecodeError,idna,urllib3,charset_normalizer,cryptography,OpenSSL,urllib3.contrib,encodings.idna,.status_codes,.adapters,.hooks,urllib3.fields,urllib3.filepost,SupportsItems,parse_http_list,.__version__,.api,.sessions</dep>
+  </meta>
+  <files>
+    <f p="setup.py" e=".py">
+      <imp>sys,setuptools</imp>
+    </f>
+    <f p="src\requests\adapters.py" e=".py">
+      <imp>os.path,warnings,socket,typing,InvalidHeader,ProxyError,SSLError,is_prepared,HTTPError,Timeout,PoolManager,_types,.auth,.models,urllib3.poolmanager,urllib3.exceptions,urllib3.util.retry,.compat,.exceptions,.structures,.utils,urllib3.contrib.socks,urllib3.connectionpool,urllib3.util,.cookies,._types</imp>
+      <fn n="SOCKSProxyManager" p="(*args: Any, **kwargs: Any)" />
+      <fn n="_urllib3_request_context" p="(&#10;    request: PreparedRequest,&#10;    verify: bool | str | None,&#10;    client_cert: tuple[str, str] | str | None,&#10;    poolmanager: PoolManager,&#10;)" />
+      <cls n="BaseAdapter">
+        <fn n="__init__" p="(self)" />
+        <fn n="send" p="(&#10;        self,&#10;        request: PreparedRequest,&#10;        stream: bool = False,&#10;        timeout: _t.TimeoutType = None,&#10;        verify: _t.VerifyType = True,&#10;        cert: _t.CertType = None,&#10;        proxies: dict[str, str] | None = None,&#10;    )" />
+        <fn n="close" p="(self)" />
+      </cls>
+      <cls n="HTTPAdapter">
+        <fn n="__init__" p="(&#10;        self,&#10;        pool_connections: int = DEFAULT_POOLSIZE,&#10;        pool_maxsize: int = DEFAULT_POOLSIZE,&#10;        max_retries: int | Retry = DEFAULT_RETRIES,&#10;        pool_block: bool = DEFAULT_POOLBLOCK,&#10;    )" />
+        <fn n="__getstate__" p="(self)" />
+        <fn n="__setstate__" p="(self, state: dict[str, Any])" />
+        <fn n="init_poolmanager" p="(&#10;        self,&#10;        connections: int,&#10;        maxsize: int,&#10;        block: bool = DEFAULT_POOLBLOCK,&#10;        **pool_kwargs: Any,&#10;    )" />
+        <fn n="proxy_manager_for" p="(self, proxy: str, **proxy_kwargs: Any)" />
+        <fn n="cert_verify" p="(&#10;        self, conn: Any, url: str, verify: _t.VerifyType, cert: _t.CertType&#10;    )" />
+        <fn n="build_response" p="(self, req: PreparedRequest, resp: Any)" />
+        <fn n="build_connection_pool_key_attributes" p="(&#10;        self, request: PreparedRequest, verify: _t.VerifyType, cert: _t.CertType = None&#10;    )" />
+        <fn n="get_connection_with_tls_context" p="(&#10;        self,&#10;        request: PreparedRequest,&#10;        verify: _t.VerifyType,&#10;        proxies: dict[str, str] | None = None,&#10;        cert: _t.CertType = None,&#10;    )" />
+        <fn n="get_connection" p="(&#10;        self, url: str, proxies: dict[str, str] | None = None&#10;    )" />
+        <fn n="close" p="(self)" />
+        <fn n="request_url" p="(&#10;        self, request: PreparedRequest, proxies: dict[str, str] | None&#10;    )" />
+        <fn n="add_headers" p="(self, request: PreparedRequest, **kwargs: Any)" />
+        <fn n="proxy_headers" p="(self, proxy: str)" />
+        <fn n="send" p="(&#10;        self,&#10;        request: PreparedRequest,&#10;        stream: bool = False,&#10;        timeout: _t.TimeoutType = None,&#10;        verify: _t.VerifyType = True,&#10;        cert: _t.CertType = None,&#10;        proxies: dict[str, str] | None = None,&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\requests\api.py" e=".py">
+      <imp>_types,.models,typing,typing_extensions</imp>
+      <fn n="request" p="(&#10;    method: str, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs]&#10;)" />
+      <fn n="get" p="(&#10;    url: _t.UriType, params: _t.ParamsType = None, **kwargs: Unpack[_t.GetKwargs]&#10;)" />
+      <fn n="options" p="(url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+      <fn n="head" p="(url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+      <fn n="post" p="(&#10;    url: _t.UriType,&#10;    data: _t.DataType = None,&#10;    json: _t.JsonType = None,&#10;    **kwargs: Unpack[_t.PostKwargs],&#10;)" />
+      <fn n="put" p="(&#10;    url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]&#10;)" />
+      <fn n="patch" p="(&#10;    url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]&#10;)" />
+      <fn n="delete" p="(url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+    </f>
+    <f p="src\requests\auth.py" e=".py">
+      <imp>hashlib,time,threading,os,re,warnings,http.cookiejar,.models,.compat,typing,._internal_utils,.utils,.cookies,base64</imp>
+      <fn n="_basic_auth_str" p="(username: bytes | str, password: bytes | str)" />
+      <cls n="AuthBase">
+        <fn n="__call__" p="(self, r: PreparedRequest)" />
+      </cls>
+      <cls n="HTTPBasicAuth">
+        <fn n="__init__" p="(self, username: str, password: str)" />
+        <fn n="__init__" p="(self, username: bytes, password: bytes)" />
+        <fn n="__init__" p="(self, username: bytes | str, password: bytes | str)" />
+        <fn n="__eq__" p="(self, other: object)" />
+        <fn n="__ne__" p="(self, other: Any)" />
+        <fn n="__call__" p="(self, r: PreparedRequest)" />
+      </cls>
+      <cls n="HTTPProxyAuth">
+        <fn n="__call__" p="(self, r: PreparedRequest)" />
+      </cls>
+      <cls n="HTTPDigestAuth">
+        <fn n="__init__" p="(self, username: str, password: str)" />
+        <fn n="__init__" p="(self, username: bytes, password: bytes)" />
+        <fn n="__init__" p="(self, username: bytes | str, password: bytes | str)" />
+        <fn n="init_per_thread_state" p="(self)" />
+        <fn n="build_digest_header" p="(self, method: str, url: str)" />
+        <fn n="md5_utf8" p="(x: str | bytes)" />
+        <fn n="sha_utf8" p="(x: str | bytes)" />
+        <fn n="sha256_utf8" p="(x: str | bytes)" />
+        <fn n="sha512_utf8" p="(x: str | bytes)" />
+        <fn n="KD" p="(s: str, d: str)" />
+        <fn n="handle_redirect" p="(self, r: Response, **kwargs: Any)" />
+        <fn n="handle_401" p="(self, r: Response, **kwargs: Any)" />
+        <fn n="__call__" p="(self, r: PreparedRequest)" />
+        <fn n="__eq__" p="(self, other: object)" />
+        <fn n="__ne__" p="(self, other: Any)" />
+      </cls>
+    </f>
+    <f p="src\requests\certs.py" e=".py">
+      <imp>certifi</imp>
+    </f>
+    <f p="src\requests\compat.py" e=".py">
+      <imp>importlib,chardet,sys,simplejson,json,cookiejar,__version__,collections.abc,http.cookies,urllib.parse,collections,urllib.request,io,types,typing</imp>
+      <fn n="_resolve_char_detection" p="()" />
+    </f>
+    <f p="src\requests\cookies.py" e=".py">
+      <imp>calendar,threading,is_prepared,time,copy,_typeshed,._internal_utils,typing,._types,http.cookiejar,.compat,.models,collections.abc</imp>
+      <fn n="extract_cookies_to_jar" p="(&#10;    jar: CookieJar, request: PreparedRequest, response: Any&#10;)" />
+      <fn n="get_cookie_header" p="(jar: CookieJar, request: PreparedRequest)" />
+      <fn n="remove_cookie_by_name" p="(&#10;    cookiejar: CookieJar, name: str, domain: str | None = None, path: str | None = None&#10;)" />
+      <fn n="_copy_cookie_jar" p="(jar: CookieJar | None)" />
+      <fn n="create_cookie" p="(name: str, value: str, **kwargs: Any)" />
+      <fn n="morsel_to_cookie" p="(morsel: Morsel[Any])" />
+      <fn n="cookiejar_from_dict" p="(&#10;    cookie_dict: dict[str, str] | None,&#10;    cookiejar: None = None,&#10;    overwrite: bool = True,&#10;)" />
+      <fn n="cookiejar_from_dict" p="(&#10;    cookie_dict: dict[str, str] | None,&#10;    cookiejar: _CookieJarT,&#10;    overwrite: bool = True,&#10;)" />
+      <fn n="cookiejar_from_dict" p="(&#10;    cookie_dict: dict[str, str] | None,&#10;    cookiejar: CookieJar | None = None,&#10;    overwrite: bool = True,&#10;)" />
+      <fn n="merge_cookies" p="(&#10;    cookiejar: CookieJar, cookies: dict[str, str] | CookieJar | None&#10;)" />
+      <cls n="MockRequest">
+        <fn n="__init__" p="(self, request: PreparedRequest)" />
+        <fn n="get_type" p="(self)" />
+        <fn n="get_host" p="(self)" />
+        <fn n="get_origin_req_host" p="(self)" />
+        <fn n="get_full_url" p="(self)" />
+        <fn n="is_unverifiable" p="(self)" />
+        <fn n="has_header" p="(self, name: str)" />
+        <fn n="get_header" p="(self, name: str, default: str | None = None)" />
+        <fn n="add_header" p="(self, key: str, val: str)" />
+        <fn n="add_unredirected_header" p="(self, name: str, value: str)" />
+        <fn n="get_new_headers" p="(self)" />
+        <fn n="unverifiable" p="(self)" />
+        <fn n="origin_req_host" p="(self)" />
+        <fn n="host" p="(self)" />
+      </cls>
+      <cls n="MockResponse">
+        <fn n="__init__" p="(self, headers: Any)" />
+        <fn n="info" p="(self)" />
+        <fn n="getheaders" p="(self, name: str)" />
+      </cls>
+      <cls n="RequestsCookieJar">
+        <fn n="get" p="(  # type: ignore[override]&#10;        self,&#10;        name: str,&#10;        default: str | None = None,&#10;        domain: str | None = None,&#10;        path: str | None = None,&#10;    )" />
+        <fn n="set" p="(&#10;        self, name: str, value: str | Morsel[dict[str, str]] | None, **kwargs: Any&#10;    )" />
+        <fn n="iterkeys" p="(self)" />
+        <fn n="keys" p="(self)" />
+        <fn n="itervalues" p="(self)" />
+        <fn n="values" p="(self)" />
+        <fn n="iteritems" p="(self)" />
+        <fn n="items" p="(self)" />
+        <fn n="list_domains" p="(self)" />
+        <fn n="list_paths" p="(self)" />
+        <fn n="multiple_domains" p="(self)" />
+        <fn n="get_dict" p="(&#10;        self, domain: str | None = None, path: str | None = None&#10;    )" />
+        <fn n="__iter__" p="(self)" />
+        <fn n="__contains__" p="(self, name: object)" />
+        <fn n="__getitem__" p="(self, name: str)" />
+        <fn n="__setitem__" p="(&#10;        self, name: str, value: str | Morsel[dict[str, str]] | None&#10;    )" />
+        <fn n="__delitem__" p="(self, name: str)" />
+        <fn n="set_cookie" p="(self, cookie: Cookie, *args: Any, **kwargs: Any)" />
+        <fn n="update" p="(  # type: ignore[override]&#10;        self, other: CookieJar | SupportsKeysAndGetItem[str, str]&#10;    )" />
+        <fn n="_find" p="(&#10;        self, name: str, domain: str | None = None, path: str | None = None&#10;    )" />
+        <fn n="_find_no_duplicates" p="(&#10;        self, name: str, domain: str | None = None, path: str | None = None&#10;    )" />
+        <fn n="__getstate__" p="(self)" />
+        <fn n="__setstate__" p="(self, state: dict[str, Any])" />
+        <fn n="copy" p="(self)" />
+        <fn n="get_policy" p="(self)" />
+      </cls>
+      <cls n="CookieConflictError" />
+    </f>
+    <f p="src\requests\exceptions.py" e=".py">
+      <imp>HTTPError,JSONDecodeError,typing,.models,.compat</imp>
+      <cls n="RequestException">
+        <fn n="__init__" p="(self, *args: Any, **kwargs: Any)" />
+      </cls>
+      <cls n="JSONDecodeError">
+        <fn n="__init__" p="(self, *args: Any, **kwargs: Any)" />
+        <fn n="__reduce__" p="(self)" />
+      </cls>
+      <cls n="RetryError" />
+      <cls n="ContentDecodingError" />
+      <cls n="ChunkedEncodingError" />
+      <cls n="InvalidJSONError" />
+      <cls n="ConnectionError" />
+      <cls n="HTTPError" />
+      <cls n="ProxyError" />
+      <cls n="SSLError" />
+      <cls n="Timeout" />
+      <cls n="UnrewindableBodyError" />
+      <cls n="TooManyRedirects" />
+      <cls n="MissingSchema" />
+      <cls n="URLRequired" />
+      <cls n="RequestsWarning" />
+      <cls n="ConnectTimeout" />
+      <cls n="ReadTimeout" />
+      <cls n="InvalidSchema" />
+      <cls n="InvalidProxyURL" />
+      <cls n="FileModeWarning" />
+      <cls n="StreamConsumedError" />
+      <cls n="RequestsDependencyWarning" />
+      <cls n="InvalidHeader" />
+      <cls n="InvalidURL" />
+    </f>
+    <f p="src\requests\help.py" e=".py">
+      <imp>json,platform,sys,idna,ssl,urllib3,charset_normalizer,chardet,cryptography,OpenSSL,__version__,typing,urllib3.contrib</imp>
+      <fn n="_implementation" p="()" />
+      <fn n="info" p="()" />
+      <fn n="main" p="()" />
+    </f>
+    <f p="src\requests\hooks.py" e=".py">
+      <imp>_types,collections.abc,.models,typing</imp>
+      <fn n="default_hooks" p="()" />
+      <fn n="dispatch_hook" p="(&#10;    key: str,&#10;    hooks: _t.HooksInputType | None,&#10;    hook_data: Response,&#10;    **kwargs: Any,&#10;)" />
+    </f>
+    <f p="src\requests\models.py" e=".py">
+      <imp>datetime,json,encodings.idna,JSONDecodeError,SSLError,idna,_types,.auth,.compat,.status_codes,.exceptions,.cookies,io,._internal_utils,.adapters,urllib3.util,.structures,collections.abc,typing_extensions,.hooks,typing,urllib3.fields,urllib3.exceptions,.utils,http.cookiejar,urllib3.filepost</imp>
+      <cls n="RequestEncodingMixin">
+        <fn n="path_url" p="(self)" />
+        <fn n="_encode_params" p="(data: str)" />
+        <fn n="_encode_params" p="(data: bytes)" />
+        <fn n="_encode_params" p="(&#10;        data: _t.SupportsRead[str | bytes],&#10;    )" />
+        <fn n="_encode_params" p="(data: _t.KVDataType)" />
+        <fn n="_encode_params" p="(&#10;        data: _t.EncodableDataType,&#10;    )" />
+        <fn n="_encode_files" p="(&#10;        files: _t.FilesType, data: _t.RawDataType | None&#10;    )" />
+      </cls>
+      <cls n="RequestHooksMixin">
+        <fn n="register_hook" p="(&#10;        self, event: str, hook: Iterable[_t.HookType] | _t.HookType&#10;    )" />
+        <fn n="deregister_hook" p="(self, event: str, hook: _t.HookType)" />
+      </cls>
+      <cls n="Request">
+        <fn n="__init__" p="(&#10;        self,&#10;        method: str | None = None,&#10;        url: _t.UriType | None = None,&#10;        headers: _t.HeadersType = None,&#10;        files: _t.FilesType = None,&#10;        data: _t.DataType = None,&#10;        params: _t.ParamsType = None,&#10;        auth: _t.AuthType = None,&#10;        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,&#10;        hooks: _t.HooksInputType | None = None,&#10;        json: _t.JsonType = None,&#10;    )" />
+        <fn n="__repr__" p="(self)" />
+        <fn n="prepare" p="(self)" />
+      </cls>
+      <cls n="PreparedRequest">
+        <fn n="__init__" p="(self)" />
+        <fn n="prepare" p="(&#10;        self,&#10;        method: str | None = None,&#10;        url: _t.UriType | None = None,&#10;        headers: Mapping[str, str | bytes] | None = None,&#10;        files: _t.FilesType = None,&#10;        data: _t.DataType = None,&#10;        params: _t.ParamsType = None,&#10;        auth: _t.AuthType = None,&#10;        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,&#10;        hooks: _t.HooksInputType | None = None,&#10;        json: _t.JsonType = None,&#10;    )" />
+        <fn n="__repr__" p="(self)" />
+        <fn n="copy" p="(self)" />
+        <fn n="prepare_method" p="(self, method: str | None)" />
+        <fn n="_get_idna_encoded_host" p="(host: str)" />
+        <fn n="prepare_url" p="(&#10;        self,&#10;        url: _t.UriType,&#10;        params: _t.ParamsType,&#10;    )" />
+        <fn n="prepare_headers" p="(self, headers: Mapping[str, str | bytes] | None)" />
+        <fn n="prepare_body" p="(&#10;        self, data: _t.DataType, files: _t.FilesType, json: _t.JsonType = None&#10;    )" />
+        <fn n="prepare_content_length" p="(self, body: _t.BodyType)" />
+        <fn n="prepare_auth" p="(&#10;        self,&#10;        auth: _t.AuthType,&#10;        url: _t.UriType = &quot;&quot;,&#10;    )" />
+        <fn n="prepare_cookies" p="(&#10;        self, cookies: RequestsCookieJar | CookieJar | dict[str, str] | None&#10;    )" />
+        <fn n="prepare_hooks" p="(self, hooks: _t.HooksInputType | None)" />
+      </cls>
+      <cls n="Response">
+        <fn n="__init__" p="(self)" />
+        <fn n="__enter__" p="(self)" />
+        <fn n="__exit__" p="(self, *args: Any)" />
+        <fn n="__getstate__" p="(self)" />
+        <fn n="__setstate__" p="(self, state: dict[str, Any])" />
+        <fn n="__repr__" p="(self)" />
+        <fn n="__bool__" p="(self)" />
+        <fn n="__nonzero__" p="(self)" />
+        <fn n="__iter__" p="(self)" />
+        <fn n="ok" p="(self)" />
+        <fn n="is_redirect" p="(self)" />
+        <fn n="is_permanent_redirect" p="(self)" />
+        <fn n="next" p="(self)" />
+        <fn n="apparent_encoding" p="(self)" />
+        <fn n="iter_content" p="(&#10;        self, chunk_size: int | None = 1, decode_unicode: Literal[False] = False&#10;    )" />
+        <fn n="iter_content" p="(&#10;        self, chunk_size: int | None = 1, *, decode_unicode: Literal[True]&#10;    )" />
+        <fn n="iter_content" p="(&#10;        self, chunk_size: int | None = 1, decode_unicode: bool = False&#10;    )" />
+        <fn n="generate" p="()" />
+        <fn n="iter_lines" p="(&#10;        self,&#10;        chunk_size: int = ITER_CHUNK_SIZE,&#10;        decode_unicode: Literal[False] = False,&#10;        delimiter: bytes | None = None,&#10;    )" />
+        <fn n="iter_lines" p="(&#10;        self,&#10;        chunk_size: int = ITER_CHUNK_SIZE,&#10;        *,&#10;        decode_unicode: Literal[True],&#10;        delimiter: str | bytes | None = None,&#10;    )" />
+        <fn n="iter_lines" p="(&#10;        self,&#10;        chunk_size: int = ITER_CHUNK_SIZE,&#10;        decode_unicode: bool = False,&#10;        delimiter: str | bytes | None = None,&#10;    )" />
+        <fn n="content" p="(self)" />
+        <fn n="text" p="(self)" />
+        <fn n="json" p="(self, **kwargs: Any)" />
+        <fn n="links" p="(self)" />
+        <fn n="raise_for_status" p="(self)" />
+        <fn n="close" p="(self)" />
+      </cls>
+    </f>
+    <f p="src\requests\packages.py" e=".py">
+      <imp>sys,.compat</imp>
+    </f>
+    <f p="src\requests\sessions.py" e=".py">
+      <imp>os,sys,time,is_prepared,_types,._internal_utils,.hooks,typing_extensions,.models,._types,.status_codes,.adapters,typing,.utils,collections,.auth,.cookies,.exceptions,.structures,.compat,collections.abc,datetime,http.cookiejar</imp>
+      <fn n="merge_setting" p="(&#10;    request_setting: Any, session_setting: Any, dict_class: type = OrderedDict&#10;)" />
+      <fn n="merge_hooks" p="(&#10;    request_hooks: _t.HooksType,&#10;    session_hooks: _t.HooksType,&#10;    dict_class: type = OrderedDict,&#10;)" />
+      <fn n="session" p="()" />
+      <cls n="SessionRedirectMixin">
+        <fn n="send" p="(self, request: PreparedRequest, **kwargs: Any)" />
+        <fn n="get_redirect_target" p="(self, resp: Response)" />
+        <fn n="should_strip_auth" p="(self, old_url: str, new_url: str)" />
+        <fn n="resolve_redirects" p="(&#10;        self,&#10;        resp: Response,&#10;        req: PreparedRequest,&#10;        stream: bool = False,&#10;        timeout: _t.TimeoutType = None,&#10;        verify: _t.VerifyType = True,&#10;        cert: _t.CertType = None,&#10;        proxies: dict[str, str] | None = None,&#10;        yield_requests: bool = False,&#10;        **adapter_kwargs: Any,&#10;    )" />
+        <fn n="rebuild_auth" p="(&#10;        self, prepared_request: PreparedRequest, response: Response&#10;    )" />
+        <fn n="rebuild_proxies" p="(&#10;        self,&#10;        prepared_request: PreparedRequest,&#10;        proxies: dict[str, str] | None,&#10;    )" />
+        <fn n="rebuild_method" p="(&#10;        self, prepared_request: PreparedRequest, response: Response&#10;    )" />
+      </cls>
+      <cls n="Session">
+        <fn n="__init__" p="(self)" />
+        <fn n="__enter__" p="(self)" />
+        <fn n="__exit__" p="(self, *args: Any)" />
+        <fn n="prepare_request" p="(self, request: Request)" />
+        <fn n="request" p="(&#10;        self,&#10;        method: str,&#10;        url: _t.UriType,&#10;        params: _t.ParamsType = None,&#10;        data: _t.DataType = None,&#10;        headers: _t.HeadersType = None,&#10;        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,&#10;        files: _t.FilesType = None,&#10;        auth: _t.AuthType = None,&#10;        timeout: _t.TimeoutType = None,&#10;        allow_redirects: bool = True,&#10;        proxies: dict[str, str] | None = None,&#10;        hooks: _t.HooksInputType | None = None,&#10;        stream: bool | None = None,&#10;        verify: _t.VerifyType | None = None,&#10;        cert: _t.CertType = None,&#10;        json: _t.JsonType = None,&#10;    )" />
+        <fn n="get" p="(&#10;        self,&#10;        url: _t.UriType,&#10;        params: _t.ParamsType = None,&#10;        **kwargs: Unpack[_t.GetKwargs],&#10;    )" />
+        <fn n="options" p="(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+        <fn n="head" p="(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+        <fn n="post" p="(&#10;        self,&#10;        url: _t.UriType,&#10;        data: _t.DataType = None,&#10;        json: _t.JsonType = None,&#10;        **kwargs: Unpack[_t.PostKwargs],&#10;    )" />
+        <fn n="put" p="(&#10;        self, url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]&#10;    )" />
+        <fn n="patch" p="(&#10;        self, url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]&#10;    )" />
+        <fn n="delete" p="(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs])" />
+        <fn n="send" p="(self, request: PreparedRequest, **kwargs: Any)" />
+        <fn n="merge_environment_settings" p="(&#10;        self,&#10;        url: str,&#10;        proxies: dict[str, str] | None,&#10;        stream: bool | None,&#10;        verify: _t.VerifyType | None,&#10;        cert: _t.CertType,&#10;    )" />
+        <fn n="get_adapter" p="(self, url: str)" />
+        <fn n="close" p="(self)" />
+        <fn n="mount" p="(self, prefix: str, adapter: BaseAdapter)" />
+        <fn n="__getstate__" p="(self)" />
+        <fn n="__setstate__" p="(self, state: dict[str, Any])" />
+      </cls>
+    </f>
+    <f p="src\requests\status_codes.py" e=".py">
+      <imp>.structures</imp>
+      <fn n="_init" p="()" />
+      <fn n="doc" p="(code: int)" />
+    </f>
+    <f p="src\requests\structures.py" e=".py">
+      <imp>collections,typing,collections.abc,.compat</imp>
+      <cls n="CaseInsensitiveDict">
+        <fn n="__init__" p="(&#10;        self,&#10;        data: Mapping[str, _VT] | Iterable[tuple[str, _VT]] | None = None,&#10;        **kwargs: _VT,&#10;    )" />
+        <fn n="__setitem__" p="(self, key: str, value: _VT)" />
+        <fn n="__getitem__" p="(self, key: str)" />
+        <fn n="__delitem__" p="(self, key: str)" />
+        <fn n="__iter__" p="(self)" />
+        <fn n="__len__" p="(self)" />
+        <fn n="lower_items" p="(self)" />
+        <fn n="__eq__" p="(self, other: object)" />
+        <fn n="copy" p="(self)" />
+        <fn n="__repr__" p="(self)" />
+      </cls>
+      <cls n="LookupDict">
+        <fn n="__init__" p="(self, name: Any = None)" />
+        <fn n="__repr__" p="(self)" />
+        <fn n="__getattr__" p="(self, key: str)" />
+        <fn n="__getitem__" p="(self, key: str)" />
+        <fn n="get" p="(self, key: str, default: None = None)" />
+        <fn n="get" p="(self, key: str, default: _D | _VT)" />
+        <fn n="get" p="(self, key: str, default: _D | None = None)" />
+      </cls>
+    </f>
+    <f p="src\requests\utils.py" e=".py">
+      <imp>codecs,io,os,contextlib,re,socket,struct,sys,tempfile,warnings,winreg,zipfile,SupportsItems,parse_http_list,_types,.structures,.models,collections,typing,urllib3.util,.__version__,._internal_utils,collections.abc,._types,.compat,.exceptions,http.cookiejar,netrc,.cookies</imp>
+      <fn n="proxy_bypass_registry" p="(host: str)" />
+      <fn n="proxy_bypass" p="(host: str)" />
+      <fn n="dict_to_sequence" p="(&#10;    d: _t.SupportsItems[Any, Any] | Iterable[tuple[Any, Any]],&#10;)" />
+      <fn n="super_len" p="(o: Any)" />
+      <fn n="get_netrc_auth" p="(&#10;    url: _t.UriType, raise_errors: bool = False&#10;)" />
+      <fn n="guess_filename" p="(obj: Any)" />
+      <fn n="extract_zipped_paths" p="(path: str)" />
+      <fn n="atomic_open" p="(filename: str)" />
+      <fn n="from_key_val_list" p="(&#10;    value: Mapping[Any, Any] | Iterable[tuple[Any, Any]] | None,&#10;)" />
+      <fn n="to_key_val_list" p="(value: None)" />
+      <fn n="to_key_val_list" p="(&#10;    value: _t.SupportsItems[_KT, _VT] | Iterable[tuple[_KT, _VT]],&#10;)" />
+      <fn n="to_key_val_list" p="(&#10;    value: _t.SupportsItems[_KT, _VT] | Iterable[tuple[_KT, _VT]] | None,&#10;)" />
+      <fn n="parse_list_header" p="(value: str)" />
+      <fn n="parse_dict_header" p="(value: str)" />
+      <fn n="unquote_header_value" p="(value: str, is_filename: bool = False)" />
+      <fn n="dict_from_cookiejar" p="(cj: CookieJar)" />
+      <fn n="add_dict_to_cookiejar" p="(cj: CookieJar, cookie_dict: dict[str, str])" />
+      <fn n="get_encodings_from_content" p="(content: str)" />
+      <fn n="_parse_content_type_header" p="(header: str)" />
+      <fn n="get_encoding_from_headers" p="(headers: CaseInsensitiveDict[str])" />
+      <fn n="stream_decode_response_unicode" p="(&#10;    iterator: Iterable[bytes], r: Response&#10;)" />
+      <fn n="iter_slices" p="(&#10;    string: bytes, slice_length: int | None&#10;)" />
+      <fn n="iter_slices" p="(&#10;    string: str, slice_length: int | None&#10;)" />
+      <fn n="iter_slices" p="(&#10;    string: bytes | str, slice_length: int | None&#10;)" />
+      <fn n="get_unicode_from_response" p="(r: Response)" />
+      <fn n="unquote_unreserved" p="(uri: str)" />
+      <fn n="requote_uri" p="(uri: str)" />
+      <fn n="address_in_network" p="(ip: str, net: str)" />
+      <fn n="dotted_netmask" p="(mask: int)" />
+      <fn n="is_ipv4_address" p="(string_ip: str)" />
+      <fn n="is_valid_cidr" p="(string_network: str)" />
+      <fn n="set_environ" p="(env_name: str, value: str | None)" />
+      <fn n="should_bypass_proxies" p="(url: str, no_proxy: str | None)" />
+      <fn n="get_proxy" p="(key: str)" />
+      <fn n="get_environ_proxies" p="(url: str, no_proxy: str | None = None)" />
+      <fn n="select_proxy" p="(url: str, proxies: dict[str, str] | None)" />
+      <fn n="resolve_proxies" p="(&#10;    request: Request | PreparedRequest,&#10;    proxies: dict[str, str] | None,&#10;    trust_env: bool = True,&#10;)" />
+      <fn n="default_user_agent" p="(name: str = &quot;python-requests&quot;)" />
+      <fn n="default_headers" p="()" />
+      <fn n="parse_header_links" p="(value: str)" />
+      <fn n="guess_json_utf" p="(data: bytes)" />
+      <fn n="prepend_scheme_if_needed" p="(url: str, new_scheme: str)" />
+      <fn n="get_auth_from_url" p="(url: str)" />
+      <fn n="check_header_validity" p="(header: tuple[str | bytes, str | bytes])" />
+      <fn n="_validate_header_part" p="(&#10;    header: tuple[str | bytes, str | bytes],&#10;    header_part: str | bytes,&#10;    header_validator_index: int,&#10;)" />
+      <fn n="urldefragauth" p="(url: str)" />
+      <fn n="rewind_body" p="(prepared_request: PreparedRequest)" />
+    </f>
+    <f p="src\requests\_internal_utils.py" e=".py">
+      <imp>re,.compat</imp>
+      <fn n="to_native_string" p="(string: str | bytes, encoding: str = &quot;ascii&quot;)" />
+      <fn n="unicode_is_ascii" p="(u_string: str)" />
+    </f>
+    <f p="src\requests\_types.py" e=".py">
+      <imp>typing,.cookies,.auth,.models,http.cookiejar,collections.abc,.structures,typing_extensions</imp>
+      <fn n="has_read" p="(obj: Any)" />
+      <fn n="is_prepared" p="(request: PreparedRequest)" />
+      <cls n="SupportsRead">
+        <fn n="read" p="(self, length: int = ..., /)" />
+      </cls>
+      <cls n="SupportsItems">
+        <fn n="items" p="(self)" />
+      </cls>
+      <cls n="RequestKwargs" />
+      <cls n="_ValidatedRequest" />
+      <cls n="BaseRequestKwargs" />
+      <cls n="GetKwargs" />
+      <cls n="PostKwargs" />
+      <cls n="DataKwargs" />
+    </f>
+    <f p="src\requests\__init__.py" e=".py">
+      <imp>warnings,urllib3,__version__,ssl,logging,urllib3.exceptions,urllib3.contrib,.__version__,.api,.exceptions,.models,.sessions,.status_codes</imp>
+      <fn n="check_compatibility" p="(&#10;    urllib3_version: str,&#10;    chardet_version: str | None,&#10;    charset_normalizer_version: str | None,&#10;)" />
+      <fn n="_check_cryptography" p="(cryptography_version: str)" />
+    </f>
+    <f p="src\requests\__version__.py" e=".py" />
+  </files>
+</repo>

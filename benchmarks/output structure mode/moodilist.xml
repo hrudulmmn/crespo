@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="files">
+  <meta>
+    <dep>numpy,joblib,sklearn.model_selection,sklearn.utils.class_weight,sklearn.preprocessing,sklearn.metrics,sklearn.ensemble,uvicorn,librosa,sqlalchemy,sqlalchemy.orm,fastapi.middleware.cors,fastapi,dotenv,sqlalchemy.dialects.postgresql,react,react-dom,clerk-react,web-vitals,jest-dom,react-router-dom,framer-motion,fiber,three,microphone-svgrepo-com,retry-svgrepo-com,logo,audiobuffer-to-wav</dep>
+  </meta>
+  <files>
+    <f p="train.py" e=".py">
+      <imp>numpy,joblib,os,sklearn.model_selection,sklearn.utils.class_weight,sklearn.preprocessing,sklearn.metrics,sklearn.ensemble</imp>
+    </f>
+    <f p="backend\backend.py" e=".py">
+      <imp>inference,uuid,uvicorn,os,librosa,sqlalchemy,schema,sqlalchemy.orm,fastapi.middleware.cors,db,fastapi</imp>
+      <fn n="home" p="()" />
+      <fn n="processAud" p="(file:UploadFile = File(...),userid:str = Form(...),username:str = Form(...),db:Session = Depends(getdb) )" />
+    </f>
+    <f p="backend\db.py" e=".py">
+      <imp>sqlalchemy,os,dotenv,sqlalchemy.orm</imp>
+      <fn n="getdb" p="()" />
+    </f>
+    <f p="backend\inference.py" e=".py">
+      <imp>librosa,numpy,joblib,os</imp>
+      <fn n="extract" p="(aud,sr)" />
+      <fn n="infer" p="(aud)" />
+    </f>
+    <f p="backend\preprocess.py" e=".py">
+      <imp>os,numpy,librosa</imp>
+    </f>
+    <f p="backend\schema.py" e=".py">
+      <imp>sqlalchemy,sqlalchemy.orm,sqlalchemy.dialects.postgresql</imp>
+      <cls n="Moodlogs" />
+    </f>
+    <f p="backend\test.py" e=".py">
+      <imp>os,dotenv</imp>
+    </f>
+    <f p="frontend\moodilist\src\App.js" e=".js">
+      <imp>router</imp>
+      <fn n="App" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\index.js" e=".js">
+      <imp>react,reportWebVitals,App,react-dom,clerk-react,index</imp>
+    </f>
+    <f p="frontend\moodilist\src\reportWebVitals.js" e=".js">
+      <imp>web-vitals</imp>
+    </f>
+    <f p="frontend\moodilist\src\setupTests.js" e=".js">
+      <imp>jest-dom</imp>
+    </f>
+    <f p="frontend\moodilist\src\auth\Auth.js" e=".js">
+      <imp>clerk-react,Signin,react-router-dom,App</imp>
+      <fn n="Sign" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\components\Embed.js" e=".js">
+      <imp>react,framer-motion</imp>
+      <fn n="Player" p="({url})" />
+    </f>
+    <f p="frontend\moodilist\src\components\Liveface.js" e=".js">
+      <imp>react</imp>
+      <fn n="Face" p="({audiodata})" />
+    </f>
+    <f p="frontend\moodilist\src\components\MoodFace.js" e=".js">
+      <imp>react</imp>
+      <fn n="Mood" p="({mood})" />
+    </f>
+    <f p="frontend\moodilist\src\components\Silk.js" e=".js">
+      <imp>fiber,react,three</imp>
+      <fn n="Silk" p="({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 })" />
+    </f>
+    <f p="frontend\moodilist\src\pages\Home.js" e=".js">
+      <imp>microphone-svgrepo-com,Record,Silk,App,Liveface,MoodFace,framer-motion,Embed,retry-svgrepo-com,clerk-react</imp>
+      <fn n="Mic" p="({StartRecord})" />
+      <fn n="Name" p="()" />
+      <fn n="Description" p="({state,mood})" />
+      <fn n="Render" p="({state,mood,StartRecord,audiodata,url})" />
+      <fn n="Home" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\pages\Signin.js" e=".js">
+      <imp>clerk-react,framer-motion</imp>
+      <fn n="Login" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\pages\Signup.js" e=".js">
+      <imp>clerk-react,framer-motion,logo</imp>
+      <fn n="Logup" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\record\Record.js" e=".js">
+      <imp>react,audiobuffer-to-wav,clerk-react</imp>
+      <fn n="Record" p="()" />
+      <fn n="Startrec" p="()" />
+      <fn n="Update" p="()" />
+    </f>
+    <f p="frontend\moodilist\src\routing\router.js" e=".js">
+      <imp>react-router-dom,Signin,Signup,Home,framer-motion,Silk,Auth</imp>
+      <fn n="Animatewait" p="()" />
+      <fn n="RouteMan" p="()" />
+    </f>
+  </files>
+</repo>

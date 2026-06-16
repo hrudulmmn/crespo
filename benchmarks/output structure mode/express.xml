@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="express">
+  <meta>
+    <dep>finalhandler,debug,node:http,node:path,once,router,body-parser,node:events,merge-descriptors,serve-static,accepts,node:net,type-is,fresh,range-parser,parseurl,proxy-addr,mime-types,vary,statuses,cookie-signature,content-disposition,depd,on-finished,send,http-errors,encodeurl,cookie,node:buffer,escape-html,etag,content-type,qs,node:querystring,node:fs</dep>
+  </meta>
+  <files>
+    <f p="index.js" e=".js">
+      <imp>express</imp>
+    </f>
+    <f p="lib\application.js" e=".js">
+      <imp>finalhandler,view,debug,node:http,utils,node:path,once,router</imp>
+      <fn n="logerror" p="(err)" />
+      <fn n="tryRender" p="(view, options, callback)" />
+    </f>
+    <f p="lib\express.js" e=".js">
+      <imp>body-parser,router,node:events,application,merge-descriptors,request,response,serve-static</imp>
+      <fn n="createApplication" p="()" />
+    </f>
+    <f p="lib\request.js" e=".js">
+      <imp>accepts,node:http,node:net,type-is,fresh,range-parser,parseurl,proxy-addr</imp>
+      <fn n="defineGetter" p="(obj, name, getter)" />
+    </f>
+    <f p="lib\response.js" e=".js">
+      <imp>node:http,mime-types,vary,statuses,cookie-signature,content-disposition,depd,on-finished,node:path,utils,send,http-errors,encodeurl,cookie,node:buffer,escape-html</imp>
+      <fn n="sendfile" p="(res, file, options, callback)" />
+      <fn n="onaborted" p="()" />
+      <fn n="ondirectory" p="()" />
+      <fn n="onerror" p="(err)" />
+      <fn n="onend" p="()" />
+      <fn n="onfile" p="()" />
+      <fn n="onfinish" p="(err)" />
+      <fn n="onstream" p="()" />
+      <fn n="stringify" p="(value, replacer, spaces, escape)" />
+    </f>
+    <f p="lib\utils.js" e=".js">
+      <imp>node:http,mime-types,proxy-addr,etag,content-type,qs,node:querystring,node:buffer</imp>
+      <fn n="acceptParams" p="(str)" />
+      <fn n="createETagGenerator" p="(options)" />
+      <fn n="parseExtendedQueryString" p="(str)" />
+    </f>
+    <f p="lib\view.js" e=".js">
+      <imp>debug,node:path,node:fs</imp>
+      <fn n="View" p="(name, options)" />
+      <fn n="tryStat" p="(path)" />
+    </f>
+  </files>
+</repo>

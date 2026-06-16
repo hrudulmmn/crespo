@@ -1,0 +1,567 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repo n="flask">
+  <meta>
+    <dep>collections.abc,click,Response,quote,FlaskClient,FlaskCliRunner,async_to_sync,.globals,werkzeug.routing,.helpers,.signals,_typeshed.wsgi,werkzeug.datastructures,,.testing,.ctx,werkzeug.serving,werkzeug.exceptions,.sansio,.templating,.typing,.sessions,.wrappers,werkzeug.wsgi,.debughelpers,Blueprint,BlueprintSetupState,.cli,importlib.metadata,dotenv,cryptography,werkzeug,werkzeug.utils,.app,click.core,typing_extensions,.blueprints,jinja2.loaders,werkzeug.local,importlib.util,abort,redirect,.json,itsdangerous,blinker,Environment,jinja2,Request,werkzeug.test,click.testing,urllib.parse,werkzeug.sansio.response,Config,url_for,appcontext_tearing_down,render_template,has_app_context,session,appcontext_popped,request_finished,copy_current_request_context,get_flashed_messages,make_response,stream_with_context,appcontext_pushed,stream_template_string,message_flashed,template_rendered,current_app,send_file,send_from_directory,request_tearing_down,stream_template,has_request_context,g,got_request_exception,request,get_template_attribute,request_started,render_template_string,after_this_request,Flask,flash,jsonify,before_render_template,.config,..sansio,werkzeug.http,.,markupsafe,.provider,.scaffold,..,..json</dep>
+  </meta>
+  <files>
+    <f p="src\flask\app.py" e=".py">
+      <imp>collections.abc,sys,os,inspect,weakref,click,Response,typing,warnings,quote,FlaskClient,FlaskCliRunner,async_to_sync,.globals,werkzeug.routing,.helpers,.signals,_typeshed.wsgi,werkzeug.datastructures,.testing,datetime,.ctx,werkzeug.serving,werkzeug.exceptions,itertools,functools,.sansio,.templating,.typing,.sessions,.wrappers,types,werkzeug.wsgi,.debughelpers</imp>
+      <fn n="_make_timedelta" p="(value: timedelta | int | None)" />
+      <fn n="remove_ctx" p="(f: F)" />
+      <fn n="wrapper" p="(self: Flask, *args: t.Any, **kwargs: t.Any)" />
+      <fn n="add_ctx" p="(f: F)" />
+      <fn n="wrapper" p="(self: Flask, *args: t.Any, **kwargs: t.Any)" />
+      <cls n="Flask">
+        <fn n="__init_subclass__" p="(cls, **kwargs: t.Any)" />
+        <fn n="__init__" p="(&#10;        self,&#10;        import_name: str,&#10;        static_url_path: str | None = None,&#10;        static_folder: str | os.PathLike[str] | None = &quot;static&quot;,&#10;        static_host: str | None = None,&#10;        host_matching: bool = False,&#10;        subdomain_matching: bool = False,&#10;        template_folder: str | os.PathLike[str] | None = &quot;templates&quot;,&#10;        instance_path: str | None = None,&#10;        instance_relative_config: bool = False,&#10;        root_path: str | None = None,&#10;    )" />
+        <fn n="get_send_file_max_age" p="(self, filename: str | None)" />
+        <fn n="send_static_file" p="(self, filename: str)" />
+        <fn n="open_resource" p="(&#10;        self, resource: str, mode: str = &quot;rb&quot;, encoding: str | None = None&#10;    )" />
+        <fn n="open_instance_resource" p="(&#10;        self, resource: str, mode: str = &quot;rb&quot;, encoding: str | None = &quot;utf-8&quot;&#10;    )" />
+        <fn n="create_jinja_environment" p="(self)" />
+        <fn n="create_url_adapter" p="(self, request: Request | None)" />
+        <fn n="raise_routing_exception" p="(self, request: Request)" />
+        <fn n="update_template_context" p="(&#10;        self, ctx: AppContext, context: dict[str, t.Any]&#10;    )" />
+        <fn n="make_shell_context" p="(self)" />
+        <fn n="run" p="(&#10;        self,&#10;        host: str | None = None,&#10;        port: int | None = None,&#10;        debug: bool | None = None,&#10;        load_dotenv: bool = True,&#10;        **options: t.Any,&#10;    )" />
+        <fn n="test_client" p="(self, use_cookies: bool = True, **kwargs: t.Any)" />
+        <fn n="test_cli_runner" p="(self, **kwargs: t.Any)" />
+        <fn n="handle_http_exception" p="(&#10;        self, ctx: AppContext, e: HTTPException&#10;    )" />
+        <fn n="handle_user_exception" p="(&#10;        self, ctx: AppContext, e: Exception&#10;    )" />
+        <fn n="handle_exception" p="(self, ctx: AppContext, e: Exception)" />
+        <fn n="log_exception" p="(&#10;        self,&#10;        ctx: AppContext,&#10;        exc_info: tuple[type, BaseException, TracebackType] | tuple[None, None, None],&#10;    )" />
+        <fn n="dispatch_request" p="(self, ctx: AppContext)" />
+        <fn n="full_dispatch_request" p="(self, ctx: AppContext)" />
+        <fn n="finalize_request" p="(&#10;        self,&#10;        ctx: AppContext,&#10;        rv: ft.ResponseReturnValue | HTTPException,&#10;        from_error_handler: bool = False,&#10;    )" />
+        <fn n="make_default_options_response" p="(self, ctx: AppContext)" />
+        <fn n="ensure_sync" p="(self, func: t.Callable[..., t.Any])" />
+        <fn n="async_to_sync" p="(&#10;        self, func: t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]&#10;    )" />
+        <fn n="url_for" p="(&#10;        self,&#10;        /,&#10;        endpoint: str,&#10;        *,&#10;        _anchor: str | None = None,&#10;        _method: str | None = None,&#10;        _scheme: str | None = None,&#10;        _external: bool | None = None,&#10;        **values: t.Any,&#10;    )" />
+        <fn n="make_response" p="(self, rv: ft.ResponseReturnValue)" />
+        <fn n="preprocess_request" p="(self, ctx: AppContext)" />
+        <fn n="process_response" p="(self, ctx: AppContext, response: Response)" />
+        <fn n="do_teardown_request" p="(&#10;        self, ctx: AppContext, exc: BaseException | None = None&#10;    )" />
+        <fn n="do_teardown_appcontext" p="(&#10;        self, ctx: AppContext, exc: BaseException | None = None&#10;    )" />
+        <fn n="app_context" p="(self)" />
+        <fn n="request_context" p="(self, environ: WSGIEnvironment)" />
+        <fn n="test_request_context" p="(self, *args: t.Any, **kwargs: t.Any)" />
+        <fn n="wsgi_app" p="(&#10;        self, environ: WSGIEnvironment, start_response: StartResponse&#10;    )" />
+        <fn n="__call__" p="(&#10;        self, environ: WSGIEnvironment, start_response: StartResponse&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\flask\blueprints.py" e=".py">
+      <imp>os,Blueprint,BlueprintSetupState,typing,.sansio,.globals,.cli,.wrappers,datetime,.helpers</imp>
+      <cls n="Blueprint">
+        <fn n="__init__" p="(&#10;        self,&#10;        name: str,&#10;        import_name: str,&#10;        static_folder: str | os.PathLike[str] | None = None,&#10;        static_url_path: str | None = None,&#10;        template_folder: str | os.PathLike[str] | None = None,&#10;        url_prefix: str | None = None,&#10;        subdomain: str | None = None,&#10;        url_defaults: dict[str, t.Any] | None = None,&#10;        root_path: str | None = None,&#10;        cli_group: str | None = _sentinel,  # type: ignore&#10;    )" />
+        <fn n="get_send_file_max_age" p="(self, filename: str | None)" />
+        <fn n="send_static_file" p="(self, filename: str)" />
+        <fn n="open_resource" p="(&#10;        self, resource: str, mode: str = &quot;rb&quot;, encoding: str | None = &quot;utf-8&quot;&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\flask\cli.py" e=".py">
+      <imp>traceback,click,code,readline,typing,ast,collections.abc,importlib.metadata,platform,ssl,dotenv,cryptography,re,inspect,os,sys,werkzeug.serving,_typeshed.wsgi,functools,werkzeug,types,werkzeug.utils,.helpers,.app,operator,click.core,.globals,rlcompleter</imp>
+      <fn n="find_best_app" p="(module: ModuleType)" />
+      <fn n="_called_with_wrong_args" p="(f: t.Callable[..., Flask])" />
+      <fn n="find_app_by_string" p="(module: ModuleType, app_name: str)" />
+      <fn n="prepare_import" p="(path: str)" />
+      <fn n="locate_app" p="(&#10;    module_name: str, app_name: str | None, raise_if_not_found: t.Literal[True] = True&#10;)" />
+      <fn n="locate_app" p="(&#10;    module_name: str, app_name: str | None, raise_if_not_found: t.Literal[False] = ...&#10;)" />
+      <fn n="locate_app" p="(&#10;    module_name: str, app_name: str | None, raise_if_not_found: bool = True&#10;)" />
+      <fn n="get_version" p="(ctx: click.Context, param: click.Parameter, value: t.Any)" />
+      <fn n="with_appcontext" p="(f: F)" />
+      <fn n="decorator" p="(ctx: click.Context, /, *args: t.Any, **kwargs: t.Any)" />
+      <fn n="_set_app" p="(ctx: click.Context, param: click.Option, value: str | None)" />
+      <fn n="_set_debug" p="(ctx: click.Context, param: click.Option, value: bool)" />
+      <fn n="_env_file_callback" p="(&#10;    ctx: click.Context, param: click.Option, value: str | None&#10;)" />
+      <fn n="_path_is_ancestor" p="(path: str, other: str)" />
+      <fn n="load_dotenv" p="(&#10;    path: str | os.PathLike[str] | None = None, load_defaults: bool = True&#10;)" />
+      <fn n="show_server_banner" p="(debug: bool, app_import_path: str | None)" />
+      <fn n="_validate_key" p="(ctx: click.Context, param: click.Parameter, value: t.Any)" />
+      <fn n="run_command" p="(&#10;    info: ScriptInfo,&#10;    host: str,&#10;    port: int,&#10;    reload: bool,&#10;    debugger: bool,&#10;    with_threads: bool,&#10;    cert: ssl.SSLContext | tuple[str, str | None] | t.Literal[&quot;adhoc&quot;] | None,&#10;    extra_files: list[str] | None,&#10;    exclude_patterns: list[str] | None,&#10;)" />
+      <fn n="app" p="(&#10;                environ: WSGIEnvironment, start_response: StartResponse&#10;            )" />
+      <fn n="shell_command" p="()" />
+      <fn n="routes_command" p="(sort: str, all_methods: bool)" />
+      <fn n="main" p="()" />
+      <cls n="ScriptInfo">
+        <fn n="__init__" p="(&#10;        self,&#10;        app_import_path: str | None = None,&#10;        create_app: t.Callable[..., Flask] | None = None,&#10;        set_debug_flag: bool = True,&#10;        load_dotenv_defaults: bool = True,&#10;    )" />
+        <fn n="load_app" p="(self)" />
+      </cls>
+      <cls n="AppGroup">
+        <fn n="command" p="(  # type: ignore[override]&#10;        self, *args: t.Any, **kwargs: t.Any&#10;    )" />
+        <fn n="decorator" p="(f: t.Callable[..., t.Any])" />
+        <fn n="group" p="(  # type: ignore[override]&#10;        self, *args: t.Any, **kwargs: t.Any&#10;    )" />
+      </cls>
+      <cls n="FlaskGroup">
+        <fn n="__init__" p="(&#10;        self,&#10;        add_default_commands: bool = True,&#10;        create_app: t.Callable[..., Flask] | None = None,&#10;        add_version_option: bool = True,&#10;        load_dotenv: bool = True,&#10;        set_debug_flag: bool = True,&#10;        **extra: t.Any,&#10;    )" />
+        <fn n="_load_plugin_commands" p="(self)" />
+        <fn n="get_command" p="(self, ctx: click.Context, name: str)" />
+        <fn n="list_commands" p="(self, ctx: click.Context)" />
+        <fn n="make_context" p="(&#10;        self,&#10;        info_name: str | None,&#10;        args: list[str],&#10;        parent: click.Context | None = None,&#10;        **extra: t.Any,&#10;    )" />
+        <fn n="parse_args" p="(self, ctx: click.Context, args: list[str])" />
+      </cls>
+      <cls n="CertParamType">
+        <fn n="__init__" p="(self)" />
+        <fn n="convert" p="(&#10;        self, value: t.Any, param: click.Parameter | None, ctx: click.Context | None&#10;    )" />
+      </cls>
+      <cls n="SeparatedPathType">
+        <fn n="convert" p="(&#10;        self, value: t.Any, param: click.Parameter | None, ctx: click.Context | None&#10;    )" />
+      </cls>
+      <cls n="NoAppException" />
+    </f>
+    <f p="src\flask\config.py" e=".py">
+      <imp>errno,types,json,os,typing,typing_extensions,werkzeug.utils,.sansio</imp>
+      <cls n="ConfigAttribute">
+        <fn n="__init__" p="(&#10;        self, name: str, get_converter: t.Callable[[t.Any], T] | None = None&#10;    )" />
+        <fn n="__get__" p="(self, obj: None, owner: None)" />
+        <fn n="__get__" p="(self, obj: App, owner: type[App])" />
+        <fn n="__get__" p="(self, obj: App | None, owner: type[App] | None = None)" />
+        <fn n="__set__" p="(self, obj: App, value: t.Any)" />
+      </cls>
+      <cls n="Config">
+        <fn n="__init__" p="(&#10;        self,&#10;        root_path: str | os.PathLike[str],&#10;        defaults: dict[str, t.Any] | None = None,&#10;    )" />
+        <fn n="from_envvar" p="(self, variable_name: str, silent: bool = False)" />
+        <fn n="from_prefixed_env" p="(&#10;        self, prefix: str = &quot;FLASK&quot;, *, loads: t.Callable[[str], t.Any] = json.loads&#10;    )" />
+        <fn n="from_pyfile" p="(&#10;        self, filename: str | os.PathLike[str], silent: bool = False&#10;    )" />
+        <fn n="from_object" p="(self, obj: object | str)" />
+        <fn n="from_file" p="(&#10;        self,&#10;        filename: str | os.PathLike[str],&#10;        load: t.Callable[[t.IO[t.Any]], t.Mapping[str, t.Any]],&#10;        silent: bool = False,&#10;        text: bool = True,&#10;    )" />
+        <fn n="from_mapping" p="(&#10;        self, mapping: t.Mapping[str, t.Any] | None = None, **kwargs: t.Any&#10;    )" />
+        <fn n="get_namespace" p="(&#10;        self, namespace: str, lowercase: bool = True, trim_namespace: bool = True&#10;    )" />
+        <fn n="__repr__" p="(self)" />
+      </cls>
+    </f>
+    <f p="src\flask\ctx.py" e=".py">
+      <imp>contextvars,typing,warnings,typing_extensions,.app,functools,werkzeug.exceptions,.globals,.signals,_typeshed.wsgi,.sessions,.wrappers,.helpers,types,werkzeug.routing</imp>
+      <fn n="after_this_request" p="(&#10;    f: ft.AfterRequestCallable[t.Any],&#10;)" />
+      <fn n="copy_current_request_context" p="(f: F)" />
+      <fn n="wrapper" p="(*args: t.Any, **kwargs: t.Any)" />
+      <fn n="has_request_context" p="()" />
+      <fn n="has_app_context" p="()" />
+      <fn n="__getattr__" p="(name: str)" />
+      <cls n="_AppCtxGlobals">
+        <fn n="__getattr__" p="(self, name: str)" />
+        <fn n="__setattr__" p="(self, name: str, value: t.Any)" />
+        <fn n="__delattr__" p="(self, name: str)" />
+        <fn n="get" p="(self, name: str, default: t.Any | None = None)" />
+        <fn n="pop" p="(self, name: str, default: t.Any = _sentinel)" />
+        <fn n="setdefault" p="(self, name: str, default: t.Any = None)" />
+        <fn n="__contains__" p="(self, item: str)" />
+        <fn n="__iter__" p="(self)" />
+        <fn n="__repr__" p="(self)" />
+      </cls>
+      <cls n="AppContext">
+        <fn n="__init__" p="(&#10;        self,&#10;        app: Flask,&#10;        *,&#10;        request: Request | None = None,&#10;        session: SessionMixin | None = None,&#10;    )" />
+        <fn n="from_environ" p="(cls, app: Flask, environ: WSGIEnvironment, /)" />
+        <fn n="has_request" p="(self)" />
+        <fn n="copy" p="(self)" />
+        <fn n="request" p="(self)" />
+        <fn n="_get_session" p="(self)" />
+        <fn n="session" p="(self)" />
+        <fn n="match_request" p="(self)" />
+        <fn n="push" p="(self)" />
+        <fn n="pop" p="(self, exc: BaseException | None = None)" />
+        <fn n="__enter__" p="(self)" />
+        <fn n="__exit__" p="(&#10;        self,&#10;        exc_type: type[BaseException] | None,&#10;        exc_value: BaseException | None,&#10;        tb: TracebackType | None,&#10;    )" />
+        <fn n="__repr__" p="(self)" />
+      </cls>
+    </f>
+    <f p="src\flask\debughelpers.py" e=".py">
+      <imp>typing,.globals,werkzeug.routing,.sansio,.wrappers,.blueprints,jinja2.loaders</imp>
+      <fn n="attach_enctype_error_multidict" p="(request: Request)" />
+      <fn n="_dump_loader_info" p="(loader: BaseLoader)" />
+      <fn n="explain_template_loading_attempts" p="(&#10;    app: App,&#10;    template: str,&#10;    attempts: list[&#10;        tuple[&#10;            BaseLoader,&#10;            Scaffold,&#10;            tuple[str, str | None, t.Callable[[], bool] | None] | None,&#10;        ]&#10;    ],&#10;)" />
+      <cls n="DebugFilesKeyError">
+        <fn n="__init__" p="(self, request: Request, key: str)" />
+        <fn n="__str__" p="(self)" />
+      </cls>
+      <cls n="FormDataRoutingRedirect">
+        <fn n="__init__" p="(self, request: Request)" />
+      </cls>
+      <cls n="newcls">
+        <fn n="__getitem__" p="(self, key: str)" />
+      </cls>
+      <cls n="UnexpectedUnicodeError" />
+    </f>
+    <f p="src\flask\globals.py" e=".py">
+      <imp>typing,warnings,.ctx,contextvars,.app,.sessions,.wrappers,werkzeug.local</imp>
+      <fn n="__getattr__" p="(name: str)" />
+      <cls n="ProxyMixin">
+        <fn n="_get_current_object" p="(self)" />
+      </cls>
+      <cls n="RequestProxy" />
+      <cls n="AppContextProxy" />
+      <cls n="FlaskProxy" />
+      <cls n="_AppCtxGlobalsProxy" />
+      <cls n="SessionMixinProxy" />
+    </f>
+    <f p="src\flask\helpers.py" e=".py">
+      <imp>importlib.util,werkzeug.utils,sys,os,typing,abort,redirect,Response,functools,datetime,types,.globals,.signals,.wrappers</imp>
+      <fn n="get_debug_flag" p="()" />
+      <fn n="get_load_dotenv" p="(default: bool = True)" />
+      <fn n="stream_with_context" p="(&#10;    generator_or_function: t.Iterator[t.AnyStr],&#10;)" />
+      <fn n="stream_with_context" p="(&#10;    generator_or_function: t.Callable[..., t.Iterator[t.AnyStr]],&#10;)" />
+      <fn n="stream_with_context" p="(&#10;    generator_or_function: t.Iterator[t.AnyStr] | t.Callable[..., t.Iterator[t.AnyStr]],&#10;)" />
+      <fn n="decorator" p="(*args: t.Any, **kwargs: t.Any)" />
+      <fn n="generator" p="()" />
+      <fn n="make_response" p="(*args: t.Any)" />
+      <fn n="url_for" p="(&#10;    endpoint: str,&#10;    *,&#10;    _anchor: str | None = None,&#10;    _method: str | None = None,&#10;    _scheme: str | None = None,&#10;    _external: bool | None = None,&#10;    **values: t.Any,&#10;)" />
+      <fn n="redirect" p="(&#10;    location: str, code: int = 303, Response: type[BaseResponse] | None = None&#10;)" />
+      <fn n="abort" p="(code: int | BaseResponse, *args: t.Any, **kwargs: t.Any)" />
+      <fn n="get_template_attribute" p="(template_name: str, attribute: str)" />
+      <fn n="flash" p="(message: str, category: str = &quot;message&quot;)" />
+      <fn n="get_flashed_messages" p="(&#10;    with_categories: bool = False, category_filter: t.Iterable[str] = ()&#10;)" />
+      <fn n="_prepare_send_file_kwargs" p="(**kwargs: t.Any)" />
+      <fn n="send_file" p="(&#10;    path_or_file: os.PathLike[t.AnyStr] | str | t.IO[bytes],&#10;    mimetype: str | None = None,&#10;    as_attachment: bool = False,&#10;    download_name: str | None = None,&#10;    conditional: bool = True,&#10;    etag: bool | str = True,&#10;    last_modified: datetime | int | float | None = None,&#10;    max_age: None | (int | t.Callable[[str | None], int | None]) = None,&#10;)" />
+      <fn n="send_from_directory" p="(&#10;    directory: os.PathLike[str] | str,&#10;    path: os.PathLike[str] | str,&#10;    **kwargs: t.Any,&#10;)" />
+      <fn n="get_root_path" p="(import_name: str)" />
+      <fn n="_split_blueprint_path" p="(name: str)" />
+      <cls n="_CollectErrors">
+        <fn n="__init__" p="(self)" />
+        <fn n="__enter__" p="(self)" />
+        <fn n="__exit__" p="(&#10;        self,&#10;        exc_type: type[BaseException] | None,&#10;        exc_val: BaseException | None,&#10;        exc_tb: TracebackType | None,&#10;    )" />
+        <fn n="raise_any" p="(self, message: str)" />
+      </cls>
+    </f>
+    <f p="src\flask\logging.py" e=".py">
+      <imp>logging,sys,typing,werkzeug.local,.globals,.sansio</imp>
+      <fn n="wsgi_errors_stream" p="()" />
+      <fn n="has_level_handler" p="(logger: logging.Logger)" />
+      <fn n="create_logger" p="(app: App)" />
+    </f>
+    <f p="src\flask\sessions.py" e=".py">
+      <imp>collections.abc,typing_extensions,hashlib,typing,.json,itsdangerous,datetime,werkzeug.datastructures,.app,.wrappers</imp>
+      <fn n="_lazy_sha1" p="(string: bytes = b&quot;&quot;)" />
+      <cls n="SessionMixin">
+        <fn n="permanent" p="(self)" />
+        <fn n="permanent" p="(self, value: bool)" />
+      </cls>
+      <cls n="SecureCookieSession">
+        <fn n="__init__" p="(&#10;        self,&#10;        initial: c.Mapping[str, t.Any] | None = None,&#10;    )" />
+        <fn n="on_update" p="(self: te.Self)" />
+      </cls>
+      <cls n="NullSession">
+        <fn n="_fail" p="(self, *args: t.Any, **kwargs: t.Any)" />
+      </cls>
+      <cls n="SessionInterface">
+        <fn n="make_null_session" p="(self, app: Flask)" />
+        <fn n="is_null_session" p="(self, obj: object)" />
+        <fn n="get_cookie_name" p="(self, app: Flask)" />
+        <fn n="get_cookie_domain" p="(self, app: Flask)" />
+        <fn n="get_cookie_path" p="(self, app: Flask)" />
+        <fn n="get_cookie_httponly" p="(self, app: Flask)" />
+        <fn n="get_cookie_secure" p="(self, app: Flask)" />
+        <fn n="get_cookie_samesite" p="(self, app: Flask)" />
+        <fn n="get_cookie_partitioned" p="(self, app: Flask)" />
+        <fn n="get_expiration_time" p="(self, app: Flask, session: SessionMixin)" />
+        <fn n="should_set_cookie" p="(self, app: Flask, session: SessionMixin)" />
+        <fn n="open_session" p="(self, app: Flask, request: Request)" />
+        <fn n="save_session" p="(&#10;        self, app: Flask, session: SessionMixin, response: Response&#10;    )" />
+      </cls>
+      <cls n="SecureCookieSessionInterface">
+        <fn n="get_signing_serializer" p="(self, app: Flask)" />
+        <fn n="open_session" p="(self, app: Flask, request: Request)" />
+        <fn n="save_session" p="(&#10;        self, app: Flask, session: SessionMixin, response: Response&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\flask\signals.py" e=".py">
+      <imp>blinker</imp>
+    </f>
+    <f p="src\flask\templating.py" e=".py">
+      <imp>typing,Environment,.helpers,.sansio,.ctx,jinja2,.globals,.signals,.debughelpers</imp>
+      <fn n="_default_template_ctx_processor" p="()" />
+      <fn n="_render" p="(ctx: AppContext, template: Template, context: dict[str, t.Any])" />
+      <fn n="render_template" p="(&#10;    template_name_or_list: str | Template | list[str | Template],&#10;    **context: t.Any,&#10;)" />
+      <fn n="render_template_string" p="(source: str, **context: t.Any)" />
+      <fn n="_stream" p="(&#10;    ctx: AppContext, template: Template, context: dict[str, t.Any]&#10;)" />
+      <fn n="generate" p="()" />
+      <fn n="stream_template" p="(&#10;    template_name_or_list: str | Template | list[str | Template],&#10;    **context: t.Any,&#10;)" />
+      <fn n="stream_template_string" p="(source: str, **context: t.Any)" />
+      <cls n="Environment">
+        <fn n="__init__" p="(self, app: App, **options: t.Any)" />
+      </cls>
+      <cls n="DispatchingJinjaLoader">
+        <fn n="__init__" p="(self, app: App)" />
+        <fn n="get_source" p="(&#10;        self, environment: BaseEnvironment, template: str&#10;    )" />
+        <fn n="_get_source_explained" p="(&#10;        self, environment: BaseEnvironment, template: str&#10;    )" />
+        <fn n="_get_source_fast" p="(&#10;        self, environment: BaseEnvironment, template: str&#10;    )" />
+        <fn n="_iter_loaders" p="(self, template: str)" />
+        <fn n="list_templates" p="(self)" />
+      </cls>
+    </f>
+    <f p="src\flask\testing.py" e=".py">
+      <imp>importlib.metadata,Request,werkzeug.test,typing,click.testing,contextlib,types,.sessions,_typeshed.wsgi,.app,.cli,copy,urllib.parse</imp>
+      <fn n="_get_werkzeug_version" p="()" />
+      <cls n="EnvironBuilder">
+        <fn n="__init__" p="(&#10;        self,&#10;        app: Flask,&#10;        path: str = &quot;/&quot;,&#10;        base_url: str | None = None,&#10;        subdomain: str | None = None,&#10;        url_scheme: str | None = None,&#10;        *args: t.Any,&#10;        **kwargs: t.Any,&#10;    )" />
+        <fn n="json_dumps" p="(self, obj: t.Any, **kwargs: t.Any)" />
+      </cls>
+      <cls n="FlaskClient">
+        <fn n="__init__" p="(self, *args: t.Any, **kwargs: t.Any)" />
+        <fn n="session_transaction" p="(&#10;        self, *args: t.Any, **kwargs: t.Any&#10;    )" />
+        <fn n="_copy_environ" p="(self, other: WSGIEnvironment)" />
+        <fn n="_request_from_builder_args" p="(&#10;        self, args: tuple[t.Any, ...], kwargs: dict[str, t.Any]&#10;    )" />
+        <fn n="open" p="(&#10;        self,&#10;        *args: t.Any,&#10;        buffered: bool = False,&#10;        follow_redirects: bool = False,&#10;        **kwargs: t.Any,&#10;    )" />
+        <fn n="__enter__" p="(self)" />
+        <fn n="__exit__" p="(&#10;        self,&#10;        exc_type: type | None,&#10;        exc_value: BaseException | None,&#10;        tb: TracebackType | None,&#10;    )" />
+      </cls>
+      <cls n="FlaskCliRunner">
+        <fn n="__init__" p="(self, app: Flask, **kwargs: t.Any)" />
+        <fn n="invoke" p="(  # type: ignore&#10;        self, cli: t.Any = None, args: t.Any = None, **kwargs: t.Any&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\flask\typing.py" e=".py">
+      <imp>collections.abc,typing,_typeshed.wsgi,werkzeug.datastructures,werkzeug.sansio.response</imp>
+    </f>
+    <f p="src\flask\views.py" e=".py">
+      <imp>typing,.globals</imp>
+      <cls n="View">
+        <fn n="dispatch_request" p="(self)" />
+        <fn n="as_view" p="(&#10;        cls, name: str, *class_args: t.Any, **class_kwargs: t.Any&#10;    )" />
+        <fn n="view" p="(**kwargs: t.Any)" />
+        <fn n="view" p="(**kwargs: t.Any)" />
+      </cls>
+      <cls n="MethodView">
+        <fn n="__init_subclass__" p="(cls, **kwargs: t.Any)" />
+        <fn n="dispatch_request" p="(self, **kwargs: t.Any)" />
+      </cls>
+    </f>
+    <f p="src\flask\wrappers.py" e=".py">
+      <imp>typing,Response,Request,werkzeug.routing,werkzeug.exceptions,.globals,.debughelpers,.helpers</imp>
+      <cls n="Request">
+        <fn n="max_content_length" p="(self)" />
+        <fn n="max_content_length" p="(self, value: int | None)" />
+        <fn n="max_form_memory_size" p="(self)" />
+        <fn n="max_form_memory_size" p="(self, value: int | None)" />
+        <fn n="max_form_parts" p="(self)" />
+        <fn n="max_form_parts" p="(self, value: int | None)" />
+        <fn n="endpoint" p="(self)" />
+        <fn n="blueprint" p="(self)" />
+        <fn n="blueprints" p="(self)" />
+        <fn n="_load_form_data" p="(self)" />
+        <fn n="on_json_loading_failed" p="(self, e: ValueError | None)" />
+      </cls>
+      <cls n="Response">
+        <fn n="max_cookie_size" p="(self)" />
+      </cls>
+    </f>
+    <f p="src\flask\__init__.py" e=".py">
+      <imp>Config,url_for,appcontext_tearing_down,render_template,Request,json,has_app_context,session,appcontext_popped,request_finished,copy_current_request_context,get_flashed_messages,make_response,stream_with_context,appcontext_pushed,stream_template_string,message_flashed,template_rendered,current_app,abort,send_file,send_from_directory,request_tearing_down,stream_template,Blueprint,has_request_context,g,got_request_exception,request,get_template_attribute,redirect,request_started,render_template_string,Response,after_this_request,Flask,flash,jsonify,before_render_template,.ctx,.signals,.templating,.config,.wrappers,.blueprints,.helpers,.globals,.app,.json</imp>
+    </f>
+    <f p="src\flask\__main__.py" e=".py">
+      <imp>.cli</imp>
+    </f>
+    <f p="src\flask\json\provider.py" e=".py">
+      <imp>dataclasses,json,decimal,uuid,weakref,typing,datetime,..sansio,werkzeug.http,werkzeug.sansio.response</imp>
+      <fn n="_default" p="(o: t.Any)" />
+      <cls n="JSONProvider">
+        <fn n="__init__" p="(self, app: App)" />
+        <fn n="dumps" p="(self, obj: t.Any, **kwargs: t.Any)" />
+        <fn n="dump" p="(self, obj: t.Any, fp: t.IO[str], **kwargs: t.Any)" />
+        <fn n="loads" p="(self, s: str | bytes, **kwargs: t.Any)" />
+        <fn n="load" p="(self, fp: t.IO[t.AnyStr], **kwargs: t.Any)" />
+        <fn n="_prepare_response_obj" p="(&#10;        self, args: tuple[t.Any, ...], kwargs: dict[str, t.Any]&#10;    )" />
+        <fn n="response" p="(self, *args: t.Any, **kwargs: t.Any)" />
+      </cls>
+      <cls n="DefaultJSONProvider">
+        <fn n="dumps" p="(self, obj: t.Any, **kwargs: t.Any)" />
+        <fn n="loads" p="(self, s: str | bytes, **kwargs: t.Any)" />
+        <fn n="response" p="(self, *args: t.Any, **kwargs: t.Any)" />
+      </cls>
+    </f>
+    <f p="src\flask\json\tag.py" e=".py">
+      <imp>typing,base64,.,uuid,werkzeug.http,markupsafe,datetime</imp>
+      <cls n="JSONTag">
+        <fn n="__init__" p="(self, serializer: TaggedJSONSerializer)" />
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+        <fn n="tag" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagDict">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="PassDict">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagTuple">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="PassList">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagBytes">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagMarkup">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagUUID">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TagDateTime">
+        <fn n="check" p="(self, value: t.Any)" />
+        <fn n="to_json" p="(self, value: t.Any)" />
+        <fn n="to_python" p="(self, value: t.Any)" />
+      </cls>
+      <cls n="TaggedJSONSerializer">
+        <fn n="__init__" p="(self)" />
+        <fn n="register" p="(&#10;        self,&#10;        tag_class: type[JSONTag],&#10;        force: bool = False,&#10;        index: int | None = None,&#10;    )" />
+        <fn n="tag" p="(self, value: t.Any)" />
+        <fn n="untag" p="(self, value: dict[str, t.Any])" />
+        <fn n="_untag_scan" p="(self, value: t.Any)" />
+        <fn n="dumps" p="(self, value: t.Any)" />
+        <fn n="loads" p="(self, value: str)" />
+      </cls>
+    </f>
+    <f p="src\flask\json\__init__.py" e=".py">
+      <imp>json,typing,.,.provider</imp>
+      <fn n="dumps" p="(obj: t.Any, **kwargs: t.Any)" />
+      <fn n="dump" p="(obj: t.Any, fp: t.IO[str], **kwargs: t.Any)" />
+      <fn n="loads" p="(s: str | bytes, **kwargs: t.Any)" />
+      <fn n="load" p="(fp: t.IO[t.AnyStr], **kwargs: t.Any)" />
+      <fn n="jsonify" p="(*args: t.Any, **kwargs: t.Any)" />
+    </f>
+    <f p="src\flask\sansio\app.py" e=".py">
+      <imp>logging,os,sys,Response,redirect,typing,.,.scaffold,itertools,werkzeug.routing,.blueprints,..,werkzeug.exceptions,..json,datetime,werkzeug.sansio.response,werkzeug.utils</imp>
+      <fn n="_make_timedelta" p="(value: timedelta | int | None)" />
+      <cls n="App">
+        <fn n="__init__" p="(&#10;        self,&#10;        import_name: str,&#10;        static_url_path: str | None = None,&#10;        static_folder: str | os.PathLike[str] | None = &quot;static&quot;,&#10;        static_host: str | None = None,&#10;        host_matching: bool = False,&#10;        subdomain_matching: bool = False,&#10;        template_folder: str | os.PathLike[str] | None = &quot;templates&quot;,&#10;        instance_path: str | None = None,&#10;        instance_relative_config: bool = False,&#10;        root_path: str | None = None,&#10;    )" />
+        <fn n="_check_setup_finished" p="(self, f_name: str)" />
+        <fn n="name" p="(self)" />
+        <fn n="logger" p="(self)" />
+        <fn n="jinja_env" p="(self)" />
+        <fn n="create_jinja_environment" p="(self)" />
+        <fn n="make_config" p="(self, instance_relative: bool = False)" />
+        <fn n="make_aborter" p="(self)" />
+        <fn n="auto_find_instance_path" p="(self)" />
+        <fn n="create_global_jinja_loader" p="(self)" />
+        <fn n="select_jinja_autoescape" p="(self, filename: str | None)" />
+        <fn n="debug" p="(self)" />
+        <fn n="debug" p="(self, value: bool)" />
+        <fn n="register_blueprint" p="(self, blueprint: Blueprint, **options: t.Any)" />
+        <fn n="iter_blueprints" p="(self)" />
+        <fn n="add_url_rule" p="(&#10;        self,&#10;        rule: str,&#10;        endpoint: str | None = None,&#10;        view_func: ft.RouteCallable | None = None,&#10;        provide_automatic_options: bool | None = None,&#10;        **options: t.Any,&#10;    )" />
+        <fn n="template_filter" p="(self, name: T_template_filter)" />
+        <fn n="template_filter" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="template_filter" p="(&#10;        self, name: T_template_filter | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_filter)" />
+        <fn n="add_template_filter" p="(&#10;        self, f: ft.TemplateFilterCallable, name: str | None = None&#10;    )" />
+        <fn n="template_test" p="(self, name: T_template_test)" />
+        <fn n="template_test" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="template_test" p="(&#10;        self, name: T_template_test | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_test)" />
+        <fn n="add_template_test" p="(&#10;        self, f: ft.TemplateTestCallable, name: str | None = None&#10;    )" />
+        <fn n="template_global" p="(self, name: T_template_global)" />
+        <fn n="template_global" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="template_global" p="(&#10;        self, name: T_template_global | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_global)" />
+        <fn n="add_template_global" p="(&#10;        self, f: ft.TemplateGlobalCallable, name: str | None = None&#10;    )" />
+        <fn n="teardown_appcontext" p="(self, f: T_teardown)" />
+        <fn n="shell_context_processor" p="(&#10;        self, f: T_shell_context_processor&#10;    )" />
+        <fn n="_find_error_handler" p="(&#10;        self, e: Exception, blueprints: list[str]&#10;    )" />
+        <fn n="trap_http_exception" p="(self, e: Exception)" />
+        <fn n="redirect" p="(self, location: str, code: int = 303)" />
+        <fn n="inject_url_defaults" p="(self, endpoint: str, values: dict[str, t.Any])" />
+        <fn n="handle_url_build_error" p="(&#10;        self, error: BuildError, endpoint: str, values: dict[str, t.Any]&#10;    )" />
+      </cls>
+    </f>
+    <f p="src\flask\sansio\blueprints.py" e=".py">
+      <imp>os,typing,..,collections,.scaffold,.app,functools</imp>
+      <cls n="BlueprintSetupState">
+        <fn n="__init__" p="(&#10;        self,&#10;        blueprint: Blueprint,&#10;        app: App,&#10;        options: t.Any,&#10;        first_registration: bool,&#10;    )" />
+        <fn n="add_url_rule" p="(&#10;        self,&#10;        rule: str,&#10;        endpoint: str | None = None,&#10;        view_func: ft.RouteCallable | None = None,&#10;        **options: t.Any,&#10;    )" />
+      </cls>
+      <cls n="Blueprint">
+        <fn n="__init__" p="(&#10;        self,&#10;        name: str,&#10;        import_name: str,&#10;        static_folder: str | os.PathLike[str] | None = None,&#10;        static_url_path: str | None = None,&#10;        template_folder: str | os.PathLike[str] | None = None,&#10;        url_prefix: str | None = None,&#10;        subdomain: str | None = None,&#10;        url_defaults: dict[str, t.Any] | None = None,&#10;        root_path: str | None = None,&#10;        cli_group: str | None = _sentinel,  # type: ignore[assignment]&#10;    )" />
+        <fn n="_check_setup_finished" p="(self, f_name: str)" />
+        <fn n="record" p="(self, func: DeferredSetupFunction)" />
+        <fn n="record_once" p="(self, func: DeferredSetupFunction)" />
+        <fn n="wrapper" p="(state: BlueprintSetupState)" />
+        <fn n="make_setup_state" p="(&#10;        self, app: App, options: dict[str, t.Any], first_registration: bool = False&#10;    )" />
+        <fn n="register_blueprint" p="(self, blueprint: Blueprint, **options: t.Any)" />
+        <fn n="register" p="(self, app: App, options: dict[str, t.Any])" />
+        <fn n="_merge_blueprint_funcs" p="(self, app: App, name: str)" />
+        <fn n="extend" p="(&#10;            bp_dict: dict[ft.AppOrBlueprintKey, list[t.Any]],&#10;            parent_dict: dict[ft.AppOrBlueprintKey, list[t.Any]],&#10;        )" />
+        <fn n="add_url_rule" p="(&#10;        self,&#10;        rule: str,&#10;        endpoint: str | None = None,&#10;        view_func: ft.RouteCallable | None = None,&#10;        provide_automatic_options: bool | None = None,&#10;        **options: t.Any,&#10;    )" />
+        <fn n="app_template_filter" p="(self, name: T_template_filter)" />
+        <fn n="app_template_filter" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="app_template_filter" p="(&#10;        self, name: T_template_filter | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_filter)" />
+        <fn n="add_app_template_filter" p="(&#10;        self, f: ft.TemplateFilterCallable, name: str | None = None&#10;    )" />
+        <fn n="register_template_filter" p="(state: BlueprintSetupState)" />
+        <fn n="app_template_test" p="(self, name: T_template_test)" />
+        <fn n="app_template_test" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="app_template_test" p="(&#10;        self, name: T_template_test | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_test)" />
+        <fn n="add_app_template_test" p="(&#10;        self, f: ft.TemplateTestCallable, name: str | None = None&#10;    )" />
+        <fn n="register_template_test" p="(state: BlueprintSetupState)" />
+        <fn n="app_template_global" p="(self, name: T_template_global)" />
+        <fn n="app_template_global" p="(&#10;        self, name: str | None = None&#10;    )" />
+        <fn n="app_template_global" p="(&#10;        self, name: T_template_global | str | None = None&#10;    )" />
+        <fn n="decorator" p="(f: T_template_global)" />
+        <fn n="add_app_template_global" p="(&#10;        self, f: ft.TemplateGlobalCallable, name: str | None = None&#10;    )" />
+        <fn n="register_template_global" p="(state: BlueprintSetupState)" />
+        <fn n="before_app_request" p="(self, f: T_before_request)" />
+        <fn n="after_app_request" p="(self, f: T_after_request)" />
+        <fn n="teardown_app_request" p="(self, f: T_teardown)" />
+        <fn n="app_context_processor" p="(&#10;        self, f: T_template_context_processor&#10;    )" />
+        <fn n="app_errorhandler" p="(&#10;        self, code: type[Exception] | int&#10;    )" />
+        <fn n="decorator" p="(f: T_error_handler)" />
+        <fn n="from_blueprint" p="(state: BlueprintSetupState)" />
+        <fn n="app_url_value_preprocessor" p="(&#10;        self, f: T_url_value_preprocessor&#10;    )" />
+        <fn n="app_url_defaults" p="(self, f: T_url_defaults)" />
+      </cls>
+    </f>
+    <f p="src\flask\sansio\scaffold.py" e=".py">
+      <imp>importlib.util,pathlib,sys,os,typing,click,.,collections,jinja2,functools,werkzeug.exceptions,werkzeug.utils,..</imp>
+      <fn n="setupmethod" p="(f: F)" />
+      <fn n="wrapper_func" p="(self: Scaffold, *args: t.Any, **kwargs: t.Any)" />
+      <fn n="_endpoint_from_view_func" p="(view_func: ft.RouteCallable)" />
+      <fn n="_find_package_path" p="(import_name: str)" />
+      <fn n="find_package" p="(import_name: str)" />
+      <cls n="Scaffold">
+        <fn n="__init__" p="(&#10;        self,&#10;        import_name: str,&#10;        static_folder: str | os.PathLike[str] | None = None,&#10;        static_url_path: str | None = None,&#10;        template_folder: str | os.PathLike[str] | None = None,&#10;        root_path: str | None = None,&#10;    )" />
+        <fn n="__repr__" p="(self)" />
+        <fn n="_check_setup_finished" p="(self, f_name: str)" />
+        <fn n="static_folder" p="(self)" />
+        <fn n="static_folder" p="(self, value: str | os.PathLike[str] | None)" />
+        <fn n="has_static_folder" p="(self)" />
+        <fn n="static_url_path" p="(self)" />
+        <fn n="static_url_path" p="(self, value: str | None)" />
+        <fn n="jinja_loader" p="(self)" />
+        <fn n="_method_route" p="(&#10;        self,&#10;        method: str,&#10;        rule: str,&#10;        options: dict[str, t.Any],&#10;    )" />
+        <fn n="get" p="(self, rule: str, **options: t.Any)" />
+        <fn n="post" p="(self, rule: str, **options: t.Any)" />
+        <fn n="put" p="(self, rule: str, **options: t.Any)" />
+        <fn n="delete" p="(self, rule: str, **options: t.Any)" />
+        <fn n="patch" p="(self, rule: str, **options: t.Any)" />
+        <fn n="route" p="(self, rule: str, **options: t.Any)" />
+        <fn n="decorator" p="(f: T_route)" />
+        <fn n="add_url_rule" p="(&#10;        self,&#10;        rule: str,&#10;        endpoint: str | None = None,&#10;        view_func: ft.RouteCallable | None = None,&#10;        provide_automatic_options: bool | None = None,&#10;        **options: t.Any,&#10;    )" />
+        <fn n="endpoint" p="(self, endpoint: str)" />
+        <fn n="decorator" p="(f: F)" />
+        <fn n="before_request" p="(self, f: T_before_request)" />
+        <fn n="after_request" p="(self, f: T_after_request)" />
+        <fn n="teardown_request" p="(self, f: T_teardown)" />
+        <fn n="context_processor" p="(&#10;        self,&#10;        f: T_template_context_processor,&#10;    )" />
+        <fn n="url_value_preprocessor" p="(&#10;        self,&#10;        f: T_url_value_preprocessor,&#10;    )" />
+        <fn n="url_defaults" p="(self, f: T_url_defaults)" />
+        <fn n="errorhandler" p="(&#10;        self, code_or_exception: type[Exception] | int&#10;    )" />
+        <fn n="decorator" p="(f: T_error_handler)" />
+        <fn n="register_error_handler" p="(&#10;        self,&#10;        code_or_exception: type[Exception] | int,&#10;        f: ft.ErrorHandlerCallable,&#10;    )" />
+        <fn n="_get_exc_class_and_code" p="(&#10;        exc_class_or_code: type[Exception] | int,&#10;    )" />
+      </cls>
+    </f>
+  </files>
+</repo>
