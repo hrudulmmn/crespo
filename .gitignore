@@ -8,4 +8,4 @@ build/
 *.egg-info/
 .eggs/
 
-*.mp4
+screenshots/*.mp4
