@@ -1,7 +1,7 @@
 <div align="center">
 <p align="center">
-  <img src=".crespo/cresbee.png" alt="Cresbee" width="200">
-  <img src=".crespo/crespo-banner.png" alt="Crespo" width="600" />
+  <img src="crespo/cresbee.png" alt="Cresbee" width="200">
+  <img src="crespo/crespo-banner.png" alt="Crespo" width="600" />
 </p>
 
 <p align="center">
