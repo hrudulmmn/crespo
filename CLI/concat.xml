@@ -1,0 +1,1082 @@
+<?xml version='1.0' encoding='utf-8'?>
+<repi n="files">
+  <file n="train.py">
+    <src>
+      import numpy as np
+      import joblib as jb
+      import os
+      from sklearn.ensemble import RandomForestClassifier
+      from sklearn.model_selection import train_test_split,StratifiedKFold,cross_val_score
+      from sklearn.metrics import accuracy_score,classification_report
+      from sklearn.utils.class_weight import compute_class_weight
+      from sklearn.preprocessing import StandardScaler
+      
+      X = np.load(os.path.join("files\datapitch\X.npy"))
+      y = np.load(os.path.join("files\datapitch\y.npy"))
+      
+      Xtrain,Xtest,ytrain,ytest = train_test_split(
+          X,y,
+          test_size=0.2,
+          stratify=y
+          )
+      scalar = StandardScaler()
+      Xtrain = scalar.fit_transform(Xtrain)
+      Xtest = scalar.transform(Xtest)
+      
+      classes = np.unique(ytrain)
+      weight = compute_class_weight(
+          class_weight="balanced",
+          classes=classes,
+          y=ytrain
+      )
+      classW  = {
+          0: 1.3,  # happy
+          1: 1.4,  # sad
+          2: 0.9,  # stressed
+          3: 1.2   # calm
+      }
+      
+      
+      model = RandomForestClassifier(
+          class_weight=classW,
+          n_estimators=200,
+          random_state=42,
+          n_jobs=-1
+          )
+      
+      model.fit(Xtrain,ytrain)
+      ypred = model.predict(Xtest)
+      print(accuracy_score(y_true=ytest,y_pred=ypred))
+      print(classification_report(y_true=ytest,y_pred=ypred,target_names=["happy","sad","stressed","calm"]))
+      
+      jb.dump(model,"modelPitch.pkl")
+    </src>
+  </file>
+  <file n="backend\backend.py">
+    <src>
+      from fastapi import FastAPI,UploadFile,File,Form,Depends
+      from fastapi.middleware.cors import CORSMiddleware
+      import inference
+      import uvicorn
+      import librosa as lb
+      import uuid
+      import os
+      import sqlalchemy as sql
+      from sqlalchemy.orm import Session
+      from db import getdb
+      from schema import Moodlogs
+      
+      app = FastAPI()
+      if __name__ == "__main__":
+          uvicorn.run("backend:app", host="127.0.0.1", port=8000, reload=True)
+      
+      app.add_middleware(
+          CORSMiddleware,
+          allow_origins = ["*"],
+          allow_methods = ["*"],
+          allow_headers = ["*"]
+      )
+      
+      playlist = {
+          "happy":"https://open.spotify.com/embed/playlist/37ch0Eeaap27uTuCGJOu3K",
+          "sad":"https://open.spotify.com/embed/playlist/4x7ovBtgZXT3Hteb637G4J",
+          "calm":"https://open.spotify.com/embed/playlist/4s3MW6LvgrTD5iZfXhZiv2",
+          "stressed":"https://open.spotify.com/embed/playlist/7qjMYTwBrkBxd3CcNSWJGT"
+      }
+      
+      @app.get("/")
+      def home():
+          return {"status": "running"}
+      
+      @app.post("/predict")
+      async def processAud(file:UploadFile = File(...),userid:str = Form(...),username:str = Form(...),db:Session = Depends(getdb) ):
+          content = await file.read()
+          uuidid = uuid.uuid4()
+          filename = f"{uuidid.hex}.wav"
+      
+          try:
+              with open(filename,"wb") as f:
+                  f.write(content)
+              aud,sr = lb.load(filename,sr=22050)
+      
+              mood,conf = inference.infer(aud)
+              os.remove(filename)
+              url = playlist[mood]
+      
+              log = Moodlogs(
+                  id=uuidid,
+                  mood=mood,
+                  confidence = conf,
+                  clerk_id = userid,
+                  clerk_username = username
+              )
+      
+              db.add(log)
+              db.commit()
+              db.refresh(log)
+      
+              return {"mood": str(mood) , "confidence":(conf),"url":str(url)}
+          
+          finally:
+              if os.path.exists(filename):
+                  os.remove(filename)
+    </src>
+  </file>
+  <file n="backend\db.py">
+    <src>
+      import sqlalchemy as sql
+      from sqlalchemy.orm import sessionmaker
+      import dotenv as dot
+      import os
+      
+      dot.load_dotenv()
+      dburl = os.getenv("DATABASE_LINK")
+      engine = sql.create_engine(dburl)
+      
+      session=sessionmaker(
+          bind=engine,
+          autoflush=False,
+          autocommit=False
+      )
+      
+      def getdb():
+          db = session()
+          try:
+              yield db
+          finally:
+              db.close()
+    </src>
+  </file>
+  <file n="backend\inference.py">
+    <src>
+      import librosa as lb
+      import joblib as jb
+      import numpy as np
+      import os
+      
+      model = jb.load(os.path.join("modelPitch.pkl"))
+      
+      def extract(aud,sr):
+          cent = lb.feature.spectral_centroid(y=aud,sr=sr)
+          CEmean = np.mean(cent)
+          CEstd = np.std(cent)
+      
+          mfcc = lb.feature.mfcc(y=aud,sr=sr,n_mfcc=13)
+          Mmean = np.mean(mfcc,axis=1)
+          Msd = np.std(mfcc,axis=1)
+      
+          chroma = lb.feature.chroma_stft(y=aud,sr=sr)
+          Cmean = np.mean(chroma,axis=1)
+          Csd = np.std(chroma,axis=1)
+      
+          cross = lb.feature.zero_crossing_rate(y=aud)
+          CRmean = np.mean(cross)
+          CRsd = np.std(cross)
+          P = lb.yin(y=aud,fmin=50,fmax=300)
+          pm = P.mean()
+          ps = P.std()
+          resultant = np.hstack([CEmean,CEstd,Mmean,Msd,Cmean,Csd,CRmean,CRsd,pm,ps])
+          resultant = resultant.reshape(1,-1)
+          return resultant
+      
+      def infer(aud):
+          Win = 3
+          duration=5
+          step =1
+          sr = 22050
+          preds = []
+      
+          
+      
+          for start in range(0,len(aud),step*sr):
+              end =  start + Win*sr
+              part = aud[start:end]
+              if len(part)&lt;Win*sr:
+                  break
+              
+              X = extract(part,sr)
+              preds.append(model.predict_proba(X)[0])
+      
+          avg = np.mean(preds,axis=0)
+          index = int(np.argmax(avg))
+          moodname = ["happy","sad","stressed","calm"]
+          if np.max(avg)&lt;0.35:
+              return "calm",float(np.max(avg))
+          else:
+              return (moodname[index]),float(np.max(avg))
+    </src>
+  </file>
+  <file n="backend\preprocess.py">
+    <src>
+      import os
+      import librosa as lb
+      import numpy as np
+      
+      duration = 3
+      X = []
+      y = []
+      moodname = ["happy","sad","stressed","calm"]
+      
+      for label,mood in enumerate(moodname):
+          datafolder =  os.path.join("Dataset",mood)
+          for file in os.listdir(datafolder):
+              if file.endswith(".wav"):
+                  path = os.path.join(datafolder,file)
+      
+                  aud,sr= lb.load(
+                      path=path,
+                      duration=duration,
+                      mono=True
+                  )
+                      
+                  if len(aud)&lt;22050*3:
+                      aud = np.pad(aud,(0,22050*duration-len(aud)))
+                  
+                  cent = lb.feature.spectral_centroid(y=aud,sr=sr)
+                  CEmean = np.mean(cent)
+                  CEstd = np.std(cent)
+      
+                  mfcc = lb.feature.mfcc(y=aud,sr=sr,n_mfcc=13)
+                  Mmean = np.mean(mfcc,axis=1)
+                  Msd = np.std(mfcc,axis=1)
+      
+                  chroma = lb.feature.chroma_stft(y=aud,sr=sr)
+                  Cmean = np.mean(chroma,axis=1)
+                  Csd = np.std(chroma,axis=1)
+      
+                  cross = lb.feature.zero_crossing_rate(y=aud)
+                  CRmean = np.mean(cross)
+                  CRsd = np.std(cross)
+                  P = lb.yin(y=aud,fmin=50,fmax=300)
+                  pm = P.mean()
+                  ps = P.std()
+                  resultant = np.hstack([CEmean,CEstd,Mmean,Msd,Cmean,Csd,CRmean,CRsd,pm,ps])
+      
+                  X.append(resultant)
+                  y.append(label)
+          
+      X = np.array(X)
+      y = np.array(y)
+      
+      np.save("X.npy",X)
+      np.save("y.npy",y)
+    </src>
+  </file>
+  <file n="backend\requirements.txt">
+    <src>
+      fastapi
+      uvicorn
+      gunicorn
+      python-multipart
+      librosa
+      numpy
+      scipy
+      joblib
+    </src>
+  </file>
+  <file n="backend\schema.py">
+    <src>
+      import sqlalchemy as sql
+      from sqlalchemy.orm import declarative_base
+      from sqlalchemy.dialects.postgresql import UUID
+      
+      base = declarative_base()
+      
+      class Moodlogs(base):
+          __tablename__ = "mood_logs"
+      
+          id=sql.Column(UUID(as_uuid=True),primary_key=True)
+          mood = sql.Column(sql.String)
+          confidence = sql.Column(sql.Float)
+          created_at = sql.Column(sql.DateTime(timezone=True),server_default=sql.sql.func.now())
+          clerk_id = sql.Column(sql.String)
+          clerk_username = sql.Column(sql.String)
+          
+    </src>
+  </file>
+  <file n="backend\test.py">
+    <src>
+      from dotenv import load_dotenv
+      import os
+      
+      load_dotenv()
+      print(os.getenv("DATABASE_LINK"))
+    </src>
+  </file>
+  <file n="frontend\moodilist\package.json">
+    <src>
+      {
+        "name": "moodilist",
+        "version": "0.1.0",
+        "private": true,
+        "dependencies": {
+          "@clerk/clerk-react": "^4.32.5",
+          "@react-three/fiber": "^8.18.0",
+          "@tailwindcss/postcss": "^4.2.1",
+          "@testing-library/dom": "^10.4.1",
+          "@testing-library/jest-dom": "^6.9.1",
+          "@testing-library/react": "^16.3.1",
+          "@testing-library/user-event": "^13.5.0",
+          "audiobuffer-to-wav": "^1.0.0",
+          "motion": "^12.26.2",
+          "react": "^18.2.0",
+          "react-dom": "^18.2.0",
+          "react-router-dom": "^6.30.3",
+          "react-scripts": "^5.0.1",
+          "three": "^0.182.0",
+          "web-vitals": "^2.1.4"
+        },
+        "scripts": {
+          "start": "react-scripts start",
+          "build": "react-scripts build",
+          "test": "react-scripts test",
+          "eject": "react-scripts eject"
+        },
+        "eslintConfig": {
+          "extends": [
+            "react-app",
+            "react-app/jest"
+          ]
+        },
+        "browserslist": {
+          "production": [
+            "&gt;0.2%",
+            "not dead",
+            "not op_mini all"
+          ],
+          "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+          ]
+        },
+        "devDependencies": {
+          "autoprefixer": "^10.4.27",
+          "postcss": "^8.5.8",
+          "tailwindcss": "^4.2.1"
+        }
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\App.js">
+    <src>
+      import { RouteMan } from "./routing/router";
+      
+      export default function App() {
+        return (
+          &lt;RouteMan/&gt;
+        );
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\index.js">
+    <src>
+      import React from 'react';
+      import ReactDOM from 'react-dom/client';
+      import './index.css';
+      import App from './App';
+      import reportWebVitals from './reportWebVitals';
+      import {ClerkProvider} from '@clerk/clerk-react'
+      
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      const pubkey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+      
+      root.render(
+          &lt;ClerkProvider publishableKey={pubkey}&gt;
+                  &lt;App/&gt;
+          &lt;/ClerkProvider&gt;
+      );
+      
+      // If you want to start measuring performance in your app, pass a function
+      // to log results (for example: reportWebVitals(console.log))
+      // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+      reportWebVitals();
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\reportWebVitals.js">
+    <src>
+      const reportWebVitals = onPerfEntry =&gt; {
+        if (onPerfEntry &amp;&amp; onPerfEntry instanceof Function) {
+          import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) =&gt; {
+            getCLS(onPerfEntry);
+            getFID(onPerfEntry);
+            getFCP(onPerfEntry);
+            getLCP(onPerfEntry);
+            getTTFB(onPerfEntry);
+          });
+        }
+      };
+      
+      export default reportWebVitals;
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\setupTests.js">
+    <src>
+      // jest-dom adds custom jest matchers for asserting on DOM nodes.
+      // allows you to do things like:
+      // expect(element).toHaveTextContent(/react/i)
+      // learn more: https://github.com/testing-library/jest-dom
+      import '@testing-library/jest-dom';
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\auth\Auth.js">
+    <src>
+      import { RedirectToSignIn, SignedIn,SignedOut} from "@clerk/clerk-react";
+      import { Navigate } from "react-router-dom";
+      import Login from "../pages/Signin";
+      import "../App.css"
+      
+      export function Sign(){
+          return(
+                      &lt;div style={{display:"flex", justifyContent:"center", alignItems:"center",marginTop:"50px"}}&gt;
+                          &lt;SignedIn&gt;
+                          &lt;Navigate to="/home" replace/&gt;
+                          &lt;/SignedIn&gt;
+                          &lt;SignedOut&gt;
+                              &lt;Navigate to="/signin"/&gt;
+                          &lt;/SignedOut&gt;
+                          &lt;/div&gt;
+                     
+          )
+      }
+      
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\components\Embed.js">
+    <src>
+      import React from 'react';
+      import {motion} from 'framer-motion';
+      
+      const Player = ({url}) =&gt;{
+          return(
+          &lt;motion.div initial={{opacity:0 , y:10}} animate={{opacity:1,y:0}} transition={{delay:0.5}} className='player'&gt;
+              &lt;iframe className='player-iframe' 
+                  title='Player' 
+                  style={{borderRadius:"15%",border:"none",boxShadow: "0 10px 30px rgba(0,0,0,0.3)"}}
+                  width="100%"
+                  height="375"
+                  src={url}
+                  allow= "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading='lazy'&gt;
+              &lt;/iframe&gt;
+          &lt;/motion.div&gt;
+          );
+      }
+      
+      export default Player;
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\components\Liveface.js">
+    <src>
+      import React from "react";
+      
+      const Face = ({audiodata})=&gt;{
+          const volume = audiodata.length&gt;0?audiodata.reduce((a,b)=&gt;a + b)/audiodata.length : 0;
+      
+          return(
+              &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+                  &lt;rect x="50" y="50" width="100" height="100" 
+                  fill="black" stroke="white" stroke-width="2"
+                  transform="rotate(45,100,100)"  /&gt;
+                  &lt;path d="M 52 91 Q 62 46 72 91" stroke="white" stroke-width="12" fill="none" transform="rotate(180,70,80)"/&gt;
+                  &lt;path d="M 113 95 Q 123 50 133 95" stroke="white" stroke-width="12" fill="none" /&gt;
+      
+                  &lt;g&gt;
+                      {volume&lt;5?
+                          (&lt;line x1="75" y1="130" x2="125" y2="130" 
+                      stroke="#4a4ae2" strokeWidth="6" strokeLinecap="round" /&gt;):
+                      ([...Array(7)].map((_,i) =&gt; {
+                          const h = (audiodata[i*5]/255)* 40 +2;
+                          return(
+                              &lt;rect
+                                  key={i}
+                                  x={80 + i * 6} 
+                                  y={130 - h / 2} 
+                                  width="4.8" 
+                                  height={h} 
+                                  fill="#4a4ae2" 
+                                  rx="3" /&gt;
+                          );
+                      })
+                      )}
+                  &lt;/g&gt;
+              &lt;/svg&gt;
+          );
+      };
+      
+      export default Face;
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\components\MoodFace.js">
+    <src>
+      import React from "react";
+      
+      const Mood = ({mood})=&gt;{
+          switch(mood){
+              case "calm":
+                  return(
+                      &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+        &lt;rect x="50" y="50" width="100" height="100" 
+              fill="black"
+              transform="rotate(45,100,100)"  /&gt;
+              &lt;line x1="65" y1="80" x2="85" y2="80" stroke="white" stroke-width="12" stroke-linecap="round" /&gt;
+              &lt;line x1="115" y1="80" x2="135" y2="80" stroke="white" stroke-width="12" stroke-linecap="round" /&gt;
+      
+        &lt;g fill="#4a4ae2" transform="translate(28,45) scale(0.8)"&gt;
+          &lt;rect x="80" y="70" width="6" height="60" rx="3" /&gt;
+          &lt;rect x="90" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="100" y="90" width="6" height="20" rx="3" /&gt;
+          &lt;rect x="110" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="120" y="95" width="6" height="10" rx="3" /&gt;
+          &lt;rect x="70" y="88" width="6" height="25" rx="3" /&gt;
+          &lt;rect x="60" y="95" width="6" height="10" rx="3" /&gt;
+        &lt;/g&gt;
+      &lt;/svg&gt;
+                  );
+      
+          case "happy":
+              return(
+                  &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+        &lt;rect x="50" y="50" width="100" height="100" 
+              fill="black"
+              transform="rotate(45,100,100)"  /&gt;
+              &lt;path d="M 65 95 Q 75 50 85 95" stroke="white" stroke-width="12" fill="none"/&gt;
+              &lt;path d="M 113 95 Q 123 50 133 95" stroke="white" stroke-width="12" fill="none" /&gt;
+        &lt;g fill="#4a4ae2" transform="translate(28,45) scale(0.8)"&gt;
+          &lt;rect x="80" y="70" width="6" height="60" rx="3" /&gt;
+          &lt;rect x="90" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="100" y="90" width="6" height="20" rx="3" /&gt;
+          &lt;rect x="110" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="120" y="95" width="6" height="10" rx="3" /&gt;
+          &lt;rect x="70" y="88" width="6" height="25" rx="3" /&gt;
+          &lt;rect x="60" y="95" width="6" height="10" rx="3" /&gt;
+        &lt;/g&gt;
+      &lt;/svg&gt;
+              );
+      
+          case "sad":
+              return(
+                  &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+        &lt;rect x="50" y="50" width="100" height="100" 
+              fill="black"
+              transform="rotate(45,100,100)"  /&gt;
+              &lt;path d="M 52 91 Q 62 46 72 91" stroke="white" stroke-width="12" fill="none" transform="rotate(180,70,80)"/&gt;
+              &lt;path d="M 113 91 Q 123 46 133 91" stroke="white" stroke-width="12" fill="none" transform="rotate(180,122,79.75)" /&gt;
+        &lt;g fill="#4a4ae2" transform="translate(28,45) scale(0.8)"&gt;
+          &lt;rect x="80" y="70" width="6" height="60" rx="3" /&gt;
+          &lt;rect x="90" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="100" y="90" width="6" height="20" rx="3" /&gt;
+          &lt;rect x="110" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="120" y="95" width="6" height="10" rx="3" /&gt;
+          &lt;rect x="70" y="88" width="6" height="25" rx="3" /&gt;
+          &lt;rect x="60" y="95" width="6" height="10" rx="3" /&gt;
+        &lt;/g&gt;
+      &lt;/svg&gt;
+              );
+      
+          case "stressed":
+              return(
+                  &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+        &lt;rect x="50" y="50" width="100" height="100" 
+              fill="black"
+              transform="rotate(45,100,100)"  /&gt;
+              &lt;path d="M 52 91 Q 62 46 72 91" stroke="white" stroke-width="12" fill="none" transform="rotate(90,59,79.75) translate(0,-15)"/&gt;
+              &lt;path d="M 113 95 Q 123 50 133 95" stroke="white" stroke-width="12" fill="none" transform="rotate(270,123,83.75)" /&gt;
+        &lt;g fill="#4a4ae2" transform="translate(28,45) scale(0.8)"&gt;
+          &lt;rect x="80" y="70" width="6" height="60" rx="3" /&gt;
+          &lt;rect x="90" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="100" y="90" width="6" height="20" rx="3" /&gt;
+          &lt;rect x="110" y="82" width="6" height="35" rx="3" /&gt;
+          &lt;rect x="120" y="95" width="6" height="10" rx="3" /&gt;
+          &lt;rect x="70" y="88" width="6" height="25" rx="3" /&gt;
+          &lt;rect x="60" y="95" width="6" height="10" rx="3" /&gt;
+        &lt;/g&gt;
+      &lt;/svg&gt;
+              );
+      
+          default:return null;
+          }
+      }
+      export default Mood;
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\components\Silk.js">
+    <src>
+      /* eslint-disable react/no-unknown-property */
+      import { Canvas, useFrame, useThree } from '@react-three/fiber';
+      import { forwardRef, useRef, useMemo, useLayoutEffect } from 'react';
+      import { Color } from 'three';
+      
+      const hexToNormalizedRGB = hex =&gt; {
+        hex = hex.replace('#', '');
+        return [
+          parseInt(hex.slice(0, 2), 16) / 255,
+          parseInt(hex.slice(2, 4), 16) / 255,
+          parseInt(hex.slice(4, 6), 16) / 255
+        ];
+      };
+      
+      const vertexShader = `
+      varying vec2 vUv;
+      varying vec3 vPosition;
+      
+      void main() {
+        vPosition = position;
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+      `;
+      
+      const fragmentShader = `
+      varying vec2 vUv;
+      varying vec3 vPosition;
+      
+      uniform float uTime;
+      uniform vec3  uColor;
+      uniform float uSpeed;
+      uniform float uScale;
+      uniform float uRotation;
+      uniform float uNoiseIntensity;
+      
+      const float e = 2.71828182845904523536;
+      
+      float noise(vec2 texCoord) {
+        float G = e;
+        vec2  r = (G * sin(G * texCoord));
+        return fract(r.x * r.y * (1.0 + texCoord.x));
+      }
+      
+      vec2 rotateUvs(vec2 uv, float angle) {
+        float c = cos(angle);
+        float s = sin(angle);
+        mat2  rot = mat2(c, -s, s, c);
+        return rot * uv;
+      }
+      
+      void main() {
+        float rnd        = noise(gl_FragCoord.xy);
+        vec2  uv         = rotateUvs(vUv * uScale, uRotation);
+        vec2  tex        = uv * uScale;
+        float tOffset    = uSpeed * uTime;
+      
+        tex.y += 0.03 * sin(8.0 * tex.x - tOffset);
+      
+        float pattern = 0.6 +
+                        0.4 * sin(5.0 * (tex.x + tex.y +
+                                         cos(3.0 * tex.x + 5.0 * tex.y) +
+                                         0.02 * tOffset) +
+                                 sin(20.0 * (tex.x + tex.y - 0.1 * tOffset)));
+      
+        vec4 col = vec4(uColor, 1.0) * vec4(pattern) - rnd / 15.0 * uNoiseIntensity;
+        col.a = 1.0;
+        gl_FragColor = col;
+      }
+      `;
+      
+      const SilkPlane = forwardRef(function SilkPlane({ uniforms }, ref) {
+        const { viewport } = useThree();
+      
+        useLayoutEffect(() =&gt; {
+          if (ref.current) {
+            ref.current.scale.set(viewport.width, viewport.height, 1);
+          }
+        }, [ref, viewport]);
+      
+        useFrame((_, delta) =&gt; {
+          ref.current.material.uniforms.uTime.value += 0.1 * delta;
+        });
+      
+        return (
+          &lt;mesh ref={ref}&gt;
+            &lt;planeGeometry args={[1, 1, 1, 1]} /&gt;
+            &lt;shaderMaterial uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} /&gt;
+          &lt;/mesh&gt;
+        );
+      });
+      SilkPlane.displayName = 'SilkPlane';
+      
+      const Silk = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }) =&gt; {
+        const meshRef = useRef();
+      
+        const uniforms = useMemo(
+          () =&gt; ({
+            uSpeed: { value: speed },
+            uScale: { value: scale },
+            uNoiseIntensity: { value: noiseIntensity },
+            uColor: { value: new Color(...hexToNormalizedRGB(color)) },
+            uRotation: { value: rotation },
+            uTime: { value: 0 }
+          }),
+          [speed, scale, noiseIntensity, color, rotation]
+        );
+      
+        return (
+          &lt;Canvas dpr={[1, 2]} frameloop="always"&gt;
+            &lt;SilkPlane ref={meshRef} uniforms={uniforms} /&gt;
+          &lt;/Canvas&gt;
+        );
+      };
+      
+      export default Silk;
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\pages\Home.js">
+    <src>
+      import mic  from '../assets/microphone-svgrepo-com.svg';
+      import '../App.css';
+      import {Record} from '../record/Record';
+      import Face from '../components/Liveface';
+      import Silk from '../components/Silk';
+      import Mood from '../components/MoodFace';
+      import {AnimatePresence, motion} from 'framer-motion';
+      import Player from '../components/Embed';
+      import retry from '../assets/retry-svgrepo-com.svg'
+      import { UserButton } from '@clerk/clerk-react';
+      
+      function Mic({StartRecord}){
+        return(
+          &lt;div&gt;
+              &lt;button className="record" onClick={StartRecord}&gt;
+                &lt;img className='imgmic' src={mic} alt="mic" /&gt;
+              &lt;/button&gt;
+            &lt;/div&gt;
+        );
+      }
+      
+      function Name(){
+        return(
+          &lt;motion.p className="heading" initial={{opacity:0,filter:"blur(20px)"}} animate={{opacity:1,filter:"blur(0px)"}} transition={{duration:0.7, type:"spring",stiffness:50,delay:0.2}}&gt;Moodilist&lt;/motion.p&gt;
+        );
+      }
+      function Description({state,mood}){
+        return(
+          &lt;AnimatePresence mode="wait"&gt;
+          {(()=&gt;{
+          switch(state){
+            case "idle":return &lt;motion.p key="idle" initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} transition={{duration:0.7,delay:0.2}} exit={{opacity:0,scale:0}}&gt;Click mic to start speaking&lt;/motion.p&gt;;
+            case "recording":return &lt;motion.p key="rec" initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0}}&gt;Audio is being recorded&lt;/motion.p&gt;;
+            case "processing":return &lt;motion.p key="pro" initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0}}&gt;Detecting Mood...&lt;/motion.p&gt;;
+            case "result":return &lt;motion.p key="res" initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0}}&gt;You are {mood}. Playing appropriate Music!&lt;/motion.p&gt;;
+            default: return null;
+          }
+        })()}
+          &lt;/AnimatePresence&gt;
+        );
+      }
+      
+      function Render({state,mood,StartRecord,audiodata,url}){
+        return(
+        &lt;AnimatePresence mode='wait'&gt;
+          {(()=&gt;{
+        switch(state){
+            case "idle":return(
+              &lt;motion.div key="idle" initial={{opacity:0,scale:0}} animate={{opacity:1,scale:1}} transition={{duration:0.7,delay:0.2,ease:"easeIn"}} exit={{opacity:0,scale:0}}&gt;
+              &lt;Mic StartRecord={StartRecord}/&gt; 
+              &lt;/motion.div&gt;
+            );
+      
+            case "recording":return(
+              &lt;motion.div key="rec" initial={{opacity:0,scale:0, y:20}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0,y:-20}}&gt;
+              &lt;Face audiodata={audiodata}/&gt;
+              &lt;/motion.div&gt;
+            );
+            case "processing":return(
+              &lt;motion.div key="pros" initial={{opacity:0,rotateY:0}} animate={{opacity:1,rotateY:[0,180,360]}} exit={{opacity:0,scale:2,transition:{duration:2}}} transition={{rotateY:{repeat:Infinity , duration:1.5,ease:'linear'}}}&gt;
+              &lt;svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" transform="scale(1.4)"&gt;
+              &lt;rect x="50" y="50" width="100" height="100" 
+              fill="black"
+              transform="rotate(45,100,100)"  /&gt;
+              &lt;/svg&gt;
+              &lt;/motion.div&gt;
+            );
+            case "result":return(
+              &lt;motion.div key="res" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:0}} transition={{type:"spring",bounce:0.5}}&gt;
+              &lt;Mood mood={mood}/&gt;
+              &lt;/motion.div&gt;
+            );
+            case "playing": return(
+              &lt;motion.div initial={{opacity:0,h:20}} animate={{opacity:1,h:0}}&gt;&lt;Player url={url}/&gt;
+              &lt;button onClick={()=&gt;window.location.reload()} className='retbtn'&gt;
+                &lt;img src={retry} alt="retry" className='retry'/&gt;
+              &lt;/button&gt;
+              &lt;/motion.div&gt;
+            );
+            default: return null;
+        }
+        })()}
+        &lt;/AnimatePresence&gt;
+        );
+      }
+      
+      export default function Home() {
+        const {Startrec,audiodata,state,mood,url} = Record();
+        return (
+          &lt;section className='App'&gt;
+          &lt;div className='bg'&gt;  &lt;Silk
+                speed={5}
+                scale={1}
+                color="#4a3aff"
+                noiseIntensity={1.5}
+                rotation={0}
+              /&gt;
+            &lt;/div&gt;
+            &lt;div className='Usericon'&gt;&lt;UserButton afterSignOutUrl='/'/&gt;&lt;/div&gt;
+            &lt;div className='contents'&gt;
+            &lt;Name/&gt;
+            &lt;div className="box"&gt;
+              &lt;Render state={state} mood={mood} StartRecord={Startrec} audiodata={audiodata} url={url}/&gt;
+            &lt;/div&gt;
+            &lt;div className='desc'&gt;
+                &lt;Description state={state} mood={mood}/&gt;
+            &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/section&gt;
+        );
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\pages\Signin.js">
+    <src>
+      import {SignIn } from "@clerk/clerk-react";
+      import {motion} from 'framer-motion';
+      
+      export default function Login(){
+          return(
+              &lt;motion.div
+            initial={{ opacity:0, y:20 }}
+            animate={{ opacity:1, y:0 }}
+            transition={{ duration:0.3 }}
+            exit={{opacity:0, y:20}}&gt;
+             &lt;div className="auth"&gt;
+              &lt;h1 className="heading2"&gt;Moodilist&lt;/h1&gt;
+              &lt;SignIn signUpUrl="/signup" routing="path" path="/signin" afterSignInUrl="/home" appearance={{
+                                  elements:{
+                                      rootBox:"mx-auto",
+                                      card:"shadow-2xl",
+                                      formButtonPrimary:{backgroundColor:"#4a3aff"
+      
+                                      },
+                                      socialButtonsBlockButton:{
+                                          backgroundColor:"#27272a"
+                                      },
+                                      socialButtonsBlockButton__hover:{
+                                          backgroundColor:"#3f3f46"
+                                      }
+                                  },
+                                  variables:{
+                                      colorBackground:"black",
+                                      colorText:"white",
+                                      colorInputBackground:"#27272a"
+                                  }
+                              }
+                              }/&gt;
+                              &lt;/div&gt;
+                              &lt;/motion.div&gt;
+                              
+          );
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\pages\Signup.js">
+    <src>
+      import { SignUp } from "@clerk/clerk-react";
+      import logo from "../assets/logo.svg"
+      import {motion} from 'framer-motion';
+      
+      export default function Logup(){
+          return(
+              &lt;motion.div
+            initial={{ opacity:0, y:20 }}
+            animate={{ opacity:1, y:0 }}
+            transition={{ duration:0.3 }}
+            exit={{opacity:0,y:20}}&gt;
+      
+              &lt;div className="signup"&gt;
+                  &lt;div className="headlogo"&gt;
+                      &lt;h1 className="heading2"&gt;Moodilist&lt;/h1&gt;
+                      &lt;img src={logo} alt="logo" className="logo"/&gt;
+                  &lt;/div&gt;
+              &lt;div className="signupform"&gt;
+              &lt;SignUp
+              routing="path" 
+              signInUrl="/"
+              path="/signup"
+              afterSignUpUrl="/home"
+              appearance={{
+                                  elements:{
+                                      rootBox:"mx-auto my-auto",
+                                      card:"shadow-2xl",
+                                      formButtonPrimary:{backgroundColor:"#4a3aff"
+      
+                                      },
+                                      socialButtonsBlockButton:{
+                                          backgroundColor:"#27272a"
+                                      },
+                                      socialButtonsBlockButton__hover:{
+                                          backgroundColor:"#3f3f46"
+                                      }
+                                  },
+                                  variables:{
+                                      colorBackground:"black",
+                                      colorText:"white",
+                                      colorInputBackground:"#27272a"
+                                  }
+                              }
+                              }/&gt;
+                              &lt;/div&gt;
+                              &lt;/div&gt;
+                              &lt;/motion.div&gt;
+                              
+          );
+          
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\record\Record.js">
+    <src>
+      import {useState,useRef} from "react";
+      import audioBufferToWav from "audiobuffer-to-wav";
+      import { useUser } from "@clerk/clerk-react";
+      
+      
+      export function Record(){
+          const [recording,recordState] = useState(false);
+          const [audiodata,setAudiodata] = useState(new Uint8Array(0));
+          const audiorec = useRef(null);
+          const chunks = useRef([]);
+          const [time,limit] = useState(5);
+          const [state,setState] = useState("idle");
+          const [mood,setMood] = useState(null);
+          const [url,seturl] = useState(null)
+          const animationref = useRef();
+          const {user} = useUser();
+      
+          const Startrec = async () =&gt; {
+              if (recording) return;
+              const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      
+              const Audiocontent = new(window.AudioContext || window.webkitAudioContext)();
+              const source = Audiocontent.createMediaStreamSource(stream);
+              const analyse = Audiocontent.createAnalyser();
+              analyse.fftSize = 256;
+              source.connect(analyse)
+              const Update = () =&gt;{
+                  const data = new Uint8Array(analyse.frequencyBinCount);
+                  analyse.getByteFrequencyData(data);
+                  setAudiodata(data);
+                  animationref.current = requestAnimationFrame(Update);
+              }
+              Update();
+      
+              audiorec.current = new MediaRecorder(stream);
+              chunks.current = [];
+      
+              audiorec.current.ondataavailable = (e) =&gt;{
+                 if(e.data.size&gt;0) chunks.current.push(e.data);
+              }
+              console.log(time);
+              audiorec.current.onstop = async () =&gt; {
+                  setState("processing");
+                  cancelAnimationFrame(animationref.current);
+                  const WBlob = new Blob(chunks.current,{type:'audio/webm'});
+                  const arraybuffer = await WBlob.arrayBuffer();
+                  const context = new (window.AudioContext || window.webkitAudioContext)({sampleRate:22050});
+                  const audiobuffer = await context.decodeAudioData(arraybuffer);
+                  const wavarr = audioBufferToWav(audiobuffer);
+                  const wav = new Blob([wavarr],{type:"audio/wav"});
+      
+                  stream.getTracks().forEach(track =&gt; track.stop());
+                  recordState(false);
+                  
+                  const userid = user?.id;
+                  const username = user?.firstName;
+                  const formdata = new FormData();
+                  formdata.append("file",wav,"recording.wav");
+                  formdata.append("userid",userid);
+                  formdata.append("username",username);
+                  try{
+                      const resp = await fetch("http://127.0.0.1:8000/predict",{
+                          method: "POST",
+                          body: formdata
+                      });
+                      const res = await resp.json();
+                      console.log(res);
+                      setState("result");
+                      setMood(res.mood);
+                      seturl(res.url)
+                      
+                      setTimeout(()=&gt;{
+                          setState("playing");
+                      },4000)
+                  }
+                  catch(error){
+                      console.log("Connection error");
+                  }
+              }
+              audiorec.current.start();
+              recordState(true);
+              setState("recording");
+              limit(5);
+      
+      
+              const timer = setInterval(()=&gt;{
+                  limit((prev)=&gt;{
+                      if(prev&lt;=1){
+                          clearInterval(timer);
+                          if(audiorec.current.state ==='recording'){
+                              audiorec.current.stop();
+                          }
+                          return 0;
+                      }
+                      return prev-1;
+                  });
+              },1000)
+          }
+          return {Startrec,recording,audiodata,state,mood,url};
+      }
+    </src>
+  </file>
+  <file n="frontend\moodilist\src\routing\router.js">
+    <src>
+      import { BrowserRouter,Navigate,Route,Routes,useLocation } from "react-router-dom";
+      import Login from "../pages/Signin";
+      import Home from "../pages/Home";
+      import Logup from "../pages/Signup";
+      import {AnimatePresence} from 'framer-motion';
+      import Silk from "../components/Silk";
+      import { Sign } from "../auth/Auth";
+      
+      function Animatewait(){
+          const location=useLocation();
+      
+          return(
+              &lt;AnimatePresence mode="wait"&gt;
+                  &lt;Routes location={location} key={location.pathname}&gt;
+                      &lt;Route path="/" element={&lt;Sign/&gt;}&gt;&lt;/Route&gt;
+                      &lt;Route path="/home" element={&lt;Home/&gt;}&gt;&lt;/Route&gt;
+                      &lt;Route path="/signup" element={&lt;Logup/&gt;}&gt;&lt;/Route&gt;
+                      &lt;Route path="/signin" element={&lt;Login/&gt;}&gt;&lt;/Route&gt;
+                  &lt;/Routes&gt;
+              &lt;/AnimatePresence&gt;
+          )
+      }
+      
+      export function RouteMan(){
+          return(
+              &lt;BrowserRouter&gt;
+                  &lt;div className="bg"&gt;
+                      &lt;Silk
+                          speed={5}
+                          scale={1}
+                          color="#4a3aff"
+                          noiseIntensity={1.5}
+                          rotation={0}
+                      /&gt;
+                      &lt;/div&gt;
+                  &lt;Animatewait/&gt;
+              &lt;/BrowserRouter&gt;
+          )
+      }
+    </src>
+  </file>
+</repi>

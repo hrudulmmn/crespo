@@ -212,6 +212,72 @@ Your key is stored locally at `~/.crespo/config` and never sent anywhere except 
 
 ---
 
+## Troubleshooting
+ 
+### `crespo: command not found`
+ 
+This usually means Crespo was installed successfully, but the executable isn't on your system `PATH`.
+ 
+**Verify installation**
+ 
+```bash
+python -m pip show crespo
+```
+ 
+If Crespo appears in the output but the `crespo` command still isn't recognized, it's a `PATH` issue — follow the steps below for your OS.
+ 
+**Windows**
+ 
+Add your Python `Scripts` directory to `PATH` (typically):
+ 
+```text
+C:\Users\<you>\AppData\Local\Programs\Python\Python3x\Scripts
+```
+ 
+Restart your terminal afterwards.
+ 
+**macOS / Linux**
+ 
+Find your user scripts directory:
+ 
+```bash
+python3 -m site --user-base
+```
+ 
+Then add its `bin` folder to your shell configuration:
+ 
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+ 
+Restart your shell and try again.
+ 
+**Multiple Python installations**
+ 
+If you have multiple Python versions installed, make sure installation and execution use the same interpreter. Check which `python`/`pip` you're actually using:
+ 
+```bash
+where python      # Windows
+which -a python3  # macOS / Linux
+```
+ 
+Reinstall using that same interpreter explicitly if needed:
+ 
+```bash
+python -m pip install --force-reinstall crespo
+```
+ 
+**Recommended: use `pipx`**
+ 
+For CLI tools, `pipx` avoids most PATH-related issues entirely:
+ 
+```bash
+pipx install crespo
+crespo ./myproject
+```
+
+---
+
 ## Contributing
 
 Contributions are welcome. If you have ideas for new output modes, better parsing, or additional language support, open an issue or PR.

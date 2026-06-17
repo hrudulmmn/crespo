@@ -201,20 +201,24 @@ def gen_summ(extracted, reponame):
     return out.resolve()
 
 
-def gen_concat(valid,reponame):
-    root = ET.Element("repo",{"n":str(reponame)})
-    
+def gen_concat(valid, reponame):
+    root = ET.Element("repi", {"n": str(reponame)})
+
     for file in valid:
-        with open(Path(file["abspath"]).resolve(),"r",encoding="utf8") as f:
+        with open(Path(file["abspath"]).resolve(), "r", encoding="utf8") as f:
             content = f.read()
-        fl = ET.SubElement(root,"file",{"n":file["relpath"]})
-        src = ET.SubElement(fl,"src")
-        indented = "\n".join("\t\t" + line for line in content.splitlines())
-        indented = security.redact(indented)
-        src.text = "\n" + indented + "\n\t"
-    
+        fl = ET.SubElement(root, "file", {"n": file["relpath"]})
+        ET.SubElement(fl, "src")  
+
+    ET.indent(root)  
+
+    for fl, file in zip(root, valid): 
+        src = fl.find("src")
+        content = open(Path(file["abspath"]).resolve(), "r", encoding="utf8").read()
+        indented = "\n" + "\n".join("      " + line for line in content.splitlines()) + "\n    "
+        src.text = security.redact(indented)
+
     out = _out_path("concat.xml")
     tree = ET.ElementTree(root)
-    ET.indent(tree)
     tree.write(str(out), encoding="utf-8", xml_declaration=True)
     return out.resolve()
