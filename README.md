@@ -82,6 +82,14 @@ No heuristics. No regex scraping. Real language grammars via Tree-sitter — the
 
 ---
 
+## Demo
+
+<div align="center">
+  <img src="./CLI/crespo/demovid2.gif" alt="Cresbee" width="1000">
+</div>
+
+---
+
 ## Modes
 
 | Mode | What it produces | Best for |
