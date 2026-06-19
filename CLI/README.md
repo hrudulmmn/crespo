@@ -1,11 +1,11 @@
 <div align="center">
 <p align="center">
-  <img src="crespo/cresbee.png" alt="Cresbee" width="200">
-  <img src="crespo/crespo-banner.png" alt="Crespo" width="600" />
+  <img src="https://github.com/hrudulmmn/crespo/blob/main/CLI/crespo/cresbee.png" alt="Cresbee" width="200">
+  <img src="https://github.com/hrudulmmn/crespo/blob/main/CLI/crespo/crespo-banner.png" alt="Crespo" width="600" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.0.13-2EA44F?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/version-v1.0.14-2EA44F?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/pypi/v/crespo?style=for-the-badge&color=2EA44F" alt="Downloads" />

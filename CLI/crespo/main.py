@@ -124,13 +124,16 @@ def main():
             import tempfile
 
             temp_dir = tempfile.mkdtemp()
-            git.Repo.clone_from(args.git, temp_dir, depth=1, single_branch=True)
+            repo = git.Repo.clone_from(args.git, temp_dir, depth=1, single_branch=True)
             if HAS_UI:
                 cli.print_info("Clone successful\n")
                 cli.print_rule()
             path = temp_dir
             reponame = args.git.rstrip("/").split("/")[-1].replace(".git", "")
             cloned = True
+            repo.close()
+            del repo
+
         except Exception as e:
             if HAS_UI:
                 cli.print_error(f"Clone failed: {e}")
@@ -294,8 +297,17 @@ def main():
 
     # ── cleanup cloned repo ───────────────────────────────────────────────────
     if cloned:
+        import gc
         import shutil
-        shutil.rmtree(path, ignore_errors=True)
+        import stat
+
+        def _on_rm_error(func, rm_path, exc_info):
+            # Windows marks git pack/idx files read-only; clear the bit and retry
+            os.chmod(rm_path, stat.S_IWRITE)
+            func(rm_path)
+
+        gc.collect()  # release any lingering GitPython file handles on Windows
+        shutil.rmtree(path, onerror=_on_rm_error)
 
 
 if __name__ == "__main__":
