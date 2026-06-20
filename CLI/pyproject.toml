@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crespo"
-version = "1.0.15"
+version = "1.0.16"
 description = "Crisp repos. Sharp AI. Give AI the blueprint, not the code."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
     {name = "Hrudul Krishna K V",email = "hrudulkrishna06@gmail.com"}
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 
 keywords = ["cli", "ai", "llm", "codebase", "ast", "tokenizer", "context-window","reduction","token-saving","developer-tools","context-compression"]
 
