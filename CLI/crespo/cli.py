@@ -153,7 +153,7 @@ def print_header(image_path: str | None = None):
         "\033[38;2;100;200;140m  Crisp repos. Sharp AI.\033[0m",
         "\033[38;2;90;90;120m  Give AI the blueprint, not the code.\033[0m",
         "",
-        "\033[38;2;100;200;140m  v1.0.14\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
+        "\033[38;2;100;200;140m  v1.0.15\033[0m  \033[38;2;90;90;120m•  MIT License  •  pip install crespo\033[0m",
     ]
 
     # print side by side

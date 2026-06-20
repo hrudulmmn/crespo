@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crespo"
-version = "1.0.14"
+version = "1.0.15"
 description = "Crisp repos. Sharp AI. Give AI the blueprint, not the code."
 readme = "README.md"
 license = { text = "MIT" }
@@ -29,8 +29,8 @@ classifiers = [
 
 dependencies = [
     "rich>=13.0.0",
-    "tree-sitter>=0.23.0",
-    "tree-sitter-language-pack>=0.0.1",
+    "tree-sitter==0.25.2",
+    "tree-sitter-language-pack==1.8.1",
     "tiktoken>=0.7.0",
     "groq>=0.9.0",
     "gitpython>=3.1.0",
