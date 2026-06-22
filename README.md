@@ -13,9 +13,9 @@
 </p>
 
 <p align="center">
-  <h2>Give AI the blueprint, not the code.</h2>
+  <h2>Crisp Repos, Sharp AI.</h2>
 
-<p><i>Stop burning your context window on raw source files.<br/>Crespo extracts what matters — and compresses everything else.</i></p>
+<p><i>Built <b>Crespo</b> because I kept hitting the context limit on multiple AI's.</i></p>
 
 ```bash
 pip install crespo && crespo ./myproject
@@ -26,13 +26,12 @@ pip install crespo && crespo ./myproject
 
 ## The Problem
 
-You paste a codebase into any LLM. It hits the context limit but you problem remains unfinished.
-You paste one file at a time. The AI loses the big picture.
-You give AI the full code. The AI reads 40,000 tokens linearly and still misses the architecture.
+When we paste the whole codebase to any LLM either it dosent understand fully or we hit the token limit. But when we try to give the context file by file it can't understand the relation between files and all these requires limited tokens that are wasted on making the AI understand the codebase rather than doing work.
 
 **Crespo solves this differently.**
 
-Instead of concatenating raw files, Crespo uses **Tree-sitter AST parsing** to extract only the structural DNA of your repository — imports, classes, functions, module connections — and emits a compact XML blueprint. Same architectural understanding. A fraction of the tokens.
+Instead of concatenating raw files, Crespo uses **Tree-sitter AST parsing** to extract only the structural aspects of your repository such as  imports, classes, functions, module connections and generates a compact XML blueprint. 
+This helps the AI understand better at the cost of a fraction of tokens.
 
 ---
 
@@ -78,7 +77,7 @@ your repo
  blueprint XML   compact · structured · LLM-ready
 ```
 
-No heuristics. No regex scraping. Real language grammars via Tree-sitter — the same parser used by GitHub, Neovim, and Zed.
+Tree-sitter handles language grammar without failing on edge cases where regex fails.
 
 ---
 
@@ -94,9 +93,9 @@ No heuristics. No regex scraping. Real language grammars via Tree-sitter — the
 
 | Mode | What it produces | Best for |
 |---|---|---|
-| `structure` | AST skeleton — imports, classes, functions | Architecture review, onboarding, LLM context |
-| `summary` | Structure + AI one-line descriptions per file | Deeper codebase understanding |
-| `concat` | Full source, secrets redacted, in structured XML | Passing entire repos to LLMs safely |
+| `structure` | AST skeleton — imports, classes, functions | When you want LLM to understand the codebase |
+| `summary` | Structure + AI one-line descriptions per file | When you want descriptions for files |
+| `concat` | Full source, secrets redacted, in structured XML | When you want to make changes in code |
 
 ---
 
@@ -175,7 +174,7 @@ Tested on real open-source repositories. Structure accuracy evaluated by asking 
 > framework repo its structure IS the content. 
 > Crespo correctly preserves it rather than discarding it.
 
-Framework-heavy repos compress slightly less because the preserved structure is genuinely useful — there is less noise to discard.
+Framework-heavy repos compress slightly less because the preserved structure is genuinely useful as there is less noise to discard.
 
 
 Token Counting is done using `tiktoken` python library.
@@ -187,7 +186,9 @@ Token Counting is done using `tiktoken` python library.
 
 ## Security
 
-Crespo redacts secrets before writing any output. Patterns covered:
+Before writing anything in the concat mode, <b>crespo</b> scans the file body for secrets and then replaces them with `[REDACTED]`.
+
+It is still not perfect but captures common patterns such as:
 
 - Quoted assignments — `api_key = "..."`, `token: '...'`
 - Raw `.env` style — `GROQ_KEY=abc123`
@@ -232,7 +233,9 @@ This usually means Crespo was installed successfully, but the executable isn't o
 python -m pip show crespo
 ```
  
-If Crespo appears in the output but the `crespo` command still isn't recognized, it's a `PATH` issue — follow the steps below for your OS.
+If Crespo appears in the output but the `crespo` command still isn't recognized, it's a `PATH` issue 
+
+Follow the steps below for your OS.
  
 **Windows**
  
