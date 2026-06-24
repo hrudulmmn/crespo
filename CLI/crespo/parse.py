@@ -3,6 +3,8 @@ from . import config
 from pathlib import Path
 from tree_sitter import QueryCursor,Parser
 from . import security
+from . import cli
+import os
 
 
 def get_parent(node):
@@ -57,17 +59,29 @@ def extract_struct(file,mode:str,rel_path=None):
     if not lang_config:
         return {"Fallback":True}
     
+    if os.path.getsize(Path(file))>10*1024*1024:
+        return {"Fallback":True}
     
-    lang_obj  =lang_config["lang_obj"]
-    parser = Parser(lang_obj)
-    query = lang_obj.query(lang_config["query"])
+    try:
+        lang_obj  =lang_config["lang_obj"]
+        parser = Parser(lang_obj)
+        query = lang_obj.query(lang_config["query"])
+    except Exception:
+        return {"Fallback":True}
     
-
-    with open(file,encoding="utf8",errors="ignore") as f:
-        source = f.read()
+    try:
+        with open(file,encoding="utf8",errors="ignore") as f:
+            source = f.read()
+    except (FileNotFoundError,PermissionError):
+        return {"Fallback":True}
     
     source_bytes = source.encode(encoding="utf8",errors="ignore")
-    tree = parser.parse(source_bytes)
+    
+    try:
+        tree = parser.parse(source_bytes)
+    except Exception:
+        return {"Fallback":True}
+    
     cursor = QueryCursor(query)
     captures = cursor.captures(tree.root_node)
 

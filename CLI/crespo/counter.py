@@ -1,4 +1,6 @@
 import tiktoken
+from . import cli
+import sys
 
 def tok_count(valid,out):
     if not out:
@@ -8,12 +10,16 @@ def tok_count(valid,out):
 
     total =0
     for file in valid:
-        with open(file["abspath"],"r",encoding="utf8") as f:
+        with open(file["abspath"],"r",encoding="utf8",errors="ignore") as f:
             content = f.read()
         total+=len(counter.encode(content))
 
-    with open(str(out),"r",encoding="utf8") as o:
-        outcontent = o.read()
-    outtok = len(counter.encode(outcontent))
+    try:
+        with open(str(out),"r",encoding="utf8",errors="ignore") as o:
+            outcontent = o.read()
+        outtok = len(counter.encode(outcontent))
+    except FileNotFoundError:
+        cli.print_error("Output File not found")
+        return total,0
 
     return total,outtok

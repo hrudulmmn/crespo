@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import fnmatch
 from . import config
+import sys
 
 HAS_UI = False 
 
@@ -71,6 +72,9 @@ def should_ignore_file(filename: str) -> bool:
         return True
     return False
 
+def walk_error(err):
+    cli.print_info(f"Skipping {err.filename}:{err.strerror}")
+
 
 def _load_gitignore_patterns(base_path: Path) -> list[str]:
     patterns = []
@@ -114,6 +118,9 @@ def _is_gitignored(rel_path: str, patterns: list[str]) -> bool:
 
 
 def walk_dir(path: str, respect_gitignore: bool = True):
+    if not os.path.isdir(path):
+        cli.print_error("Not a Directory!")
+        sys.exit(1)
     base_path = Path(path).resolve()
     gitignore_patterns = (
         _load_gitignore_patterns(base_path)
@@ -126,10 +133,15 @@ def walk_dir(path: str, respect_gitignore: bool = True):
         print(f"\n Walking: {str(base_path)}\n")
     valid_files = []
 
-    for root, dirs, files in os.walk(base_path):
-        rel_root = str(
-            Path(root).resolve().relative_to(base_path)
-        )
+
+    for root, dirs, files in os.walk(base_path,followlinks=False,onerror=walk_error,topdown=True):
+        try:
+            rel_root = str(
+                Path(root).resolve().relative_to(base_path)
+            )
+        except ValueError:
+            cli.print_error(f"Skipping file outside repo: {full_path}")
+            continue
 
         dirs[:] = [
             d for d in dirs
@@ -153,10 +165,15 @@ def walk_dir(path: str, respect_gitignore: bool = True):
                 continue
 
             full_path = os.path.join(root, file)
-            rel_path = str(
-                Path(full_path).resolve()
-                .relative_to(base_path)
-            )
+
+            try:
+                rel_path = str(
+                    Path(full_path).resolve()
+                    .relative_to(base_path)
+                )
+            except ValueError:
+                cli.print_error(f"Skipping file outside repo: {full_path}")
+                continue
 
             if respect_gitignore and _is_gitignored(
                 rel_path, gitignore_patterns
@@ -165,7 +182,7 @@ def walk_dir(path: str, respect_gitignore: bool = True):
 
             isconfig = file in CONFIG_FILES
             if not isconfig and \
-               Path(file).suffix.lower() not in config.get_config():
+            Path(file).suffix.lower() not in config.get_config():
                 continue
 
             valid_files.append({

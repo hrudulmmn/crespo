@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "crespo"
-version = "1.0.16"
+version = "1.0.17"
 description = "Crisp repos. Sharp AI. Give AI the blueprint, not the code."
 readme = "README.md"
 license = { text = "MIT" }

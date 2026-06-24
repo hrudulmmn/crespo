@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from .summary import Summariser
 from . import security
+from . import cli
 
 def is_stdlib(module):
     
@@ -44,7 +45,9 @@ def gen_struct(extracted,reponame):
             continue
         for dep in file["imports"]:
             module = _clean_import(dep)
-            if not is_stdlib(module) and module not in pathstem and module not in imports:
+            if file["ext"]==".py":
+                module = module.split(".")[0]
+            if module and not is_stdlib(module) and module not in pathstem and module not in imports:
                 imports.append(module)
     
     deps.text = ",".join(imports)
@@ -76,16 +79,21 @@ def gen_struct(extracted,reponame):
                     fn = ET.SubElement(cls,"fn",{"n":func["name"],"p":func["params"]})
         
         if file["struct"]:
-            struct = ET.SubElement(f,"struct",{"n":file["struct"]})
+            struct = ET.SubElement(f,"struct",{"n":",".join(file["struct"])})
         
         if file["enum"]:
-            enum = ET.SubElement(f,"enum",{"n":file["enum"]})
+            enum = ET.SubElement(f,"enum",{"n":",".join(file["enum"])})
 
 
     out = _out_path("structure.xml")
     tree = ET.ElementTree(root)
     ET.indent(tree)
-    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+
+    try:
+        tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    except OSError as e:
+        cli.print_error(f"Failed to Write XML : {e}")
+        sys.exit(1)
     return out.resolve()
         
     
@@ -109,6 +117,8 @@ def gen_summ(extracted, reponame):
             continue
         for dep in file["imports"]:
             module = _clean_import(dep)
+            if file["ext"]==".py":
+                module = module.split(".")[0]
             if module and not is_stdlib(module) and module not in pathstem and module not in imports:
                 imports.append(module)
 
@@ -197,28 +207,36 @@ def gen_summ(extracted, reponame):
     out = _out_path("summary.xml")
     tree = ET.ElementTree(root)
     ET.indent(tree)
-    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    try:
+        tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    except OSError as e:
+        cli.print_error(f"Failed to Write XML : {e}")
+        sys.exit(1)
     return out.resolve()
 
 
 def gen_concat(valid, reponame):
-    root = ET.Element("repi", {"n": str(reponame)})
+    root = ET.Element("repo", {"n": str(reponame)})
 
     for file in valid:
-        with open(Path(file["abspath"]).resolve(), "r", encoding="utf8") as f:
-            content = f.read()
+        try:
+            with open(Path(file["abspath"]).resolve(), "r", encoding="utf8",errors="ignore") as f:
+                content = f.read()
+        except (FileNotFoundError,PermissionError):
+            continue
+
         fl = ET.SubElement(root, "file", {"n": file["relpath"]})
-        ET.SubElement(fl, "src")  
-
-    ET.indent(root)  
-
-    for fl, file in zip(root, valid): 
-        src = fl.find("src")
-        content = open(Path(file["abspath"]).resolve(), "r", encoding="utf8").read()
+        src = ET.SubElement(fl, "src")  
         indented = "\n" + "\n".join("      " + line for line in content.splitlines()) + "\n    "
         src.text = security.redact(indented)
 
+    ET.indent(root)  
+
     out = _out_path("concat.xml")
     tree = ET.ElementTree(root)
-    tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    try:
+        tree.write(str(out), encoding="utf-8", xml_declaration=True)
+    except OSError as e:
+        cli.print_error(f"Failed to Write file : {e}")
+        sys.exit(1)
     return out.resolve()
