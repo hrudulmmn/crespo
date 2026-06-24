@@ -200,7 +200,8 @@ def print_usage():
                 "  [green]--output[/green]    Output filename  [dim](default: blueprint.xml)[/dim]\n"
                 "  [green]--groq[/green]      Groq API key for summary mode [dim]or set CRESPO_GROQ_KEY env var[/dim]\n"
                 "  [green]--git[/green]       Using git URL.\n"
-                "  [green]--help[/green]      Show this message"
+                "  [green]--help[/green]      Show this message\n"
+                "  \n[#8c64dc][link=https://buymeacoffee.com/_hrudu_lmmn_] SUPPORT CRESPO[/link][/#8c64dc]"
             ),
             title="[bold green]Crespo[/bold green]",
             border_style="green",
